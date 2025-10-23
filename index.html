@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>U.Scout - The Footballer Network</title>
+    
+    <!-- Using the JIT CDN for optimized local development (as a replacement for the full CDN) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    
+    <!-- Tailwind Configuration Block (Simulating a local config setup) -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#1f2937', /* Dark Gray/Black */
+                        'secondary': '#16a34a', /* Vibrant Green */
+                        'accent': '#16a34a',
+                    },
+                }
+            }
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Custom scrollbar styling for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569; /* slate-600 */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #e2e8f0; /* slate-200 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* slate-50 - Light background for content */
+        }
+        /* Custom black/dark gray primary for the black part of the theme */
+        .primary-color {
+            background-color: #1f2937; /* gray-800 */
+        }
+        /* Custom green accent for text and icons */
+        .text-primary {
+            color: #16a34a; /* green-600 */
+        }
+        .active-nav {
+            border-bottom: 3px solid #16a34a; /* green-600 */
+            /* Ensure text color is right for active desktop nav */
+            color: #ffffff !important; 
+        }
+        /* Styles for the Reels/Highlights grid */
+        .highlight-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr); /* Default to 2 columns on mobile/small screen */
+            gap: 1rem;
+        }
+        @media (min-width: 768px) { /* 3 columns on desktop */
+            .highlight-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        .highlight-card {
+            aspect-ratio: 9/16; /* Reel ratio */
+            background-color: #334155; /* slate-700 */
+        }
+        
+        /* Home View Styles */
+        .home-video-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .home-video {
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+            /* UPDATED BACKGROUND: Simulates a 4K night stadium with green pitch and floodlights */
+            background: url('https://placehold.co/1920x1080/0A2A0A/E6E6FA?text=NIGHT+PITCH+4K') center/cover; 
+        }
+        .home-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7); /* Dark overlay for contrast */
+            z-index: 1;
+        }
+        .home-content {
+            z-index: 2;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Main Application Container -->
+    <div id="app" class="flex flex-col min-h-screen">
+        
+        <!-- Header -->
+        <header class="primary-color shadow-lg p-4 sticky top-0 z-20">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
+                <!-- LOGO SECTION: Custom SVG implemented here -->
+                <div class="text-2xl font-extrabold text-white flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7 mr-2 fill-current">
+                        <!-- Football in Green (Theme Accent) -->
+                        <circle cx="12" cy="12" r="10" fill="#16a34a" stroke="#f8fafc" stroke-width="1.5"/>
+                        <!-- Target Reticle/Scout Focus in Dark Gray (Theme Primary) -->
+                        <path d="M12 2v20 M2 12h20" stroke="#1f2937" stroke-width="1.5"/>
+                        <circle cx="12" cy="12" r="5" stroke="#1f2937" stroke-width="1.5" fill="none"/>
+                        <circle cx="12" cy="12" r="1.5" fill="#1f2937"/>
+                    </svg>
+                    U.Scout
+                </div>
+                <!-- END LOGO SECTION -->
+                
+                <div class="flex items-center space-x-4">
+                    <span id="user-greeting" class="hidden md:inline text-sm font-medium text-gray-300"></span>
+                    <button onclick="document.getElementById('profile-modal').classList.remove('hidden')" class="bg-white text-gray-800 hover:bg-gray-200 px-3 py-1 rounded-full text-xs font-semibold shadow transition duration-150">
+                        <i data-lucide="user" class="w-4 h-4 inline mr-1 text-green-600"></i> Profile
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Navigation Tabs (Only visible on larger screens) -->
+            <nav class="hidden sm:flex max-w-7xl mx-auto mt-4 border-b border-gray-700">
+                <button data-view="home" onclick="switchView('home')" class="view-btn flex-1 py-2 text-white hover:bg-gray-700 font-semibold transition duration-150 active-nav flex items-center justify-center">
+                    <i data-lucide="home" class="w-5 h-5 mr-2"></i> Home
+                </button>
+                <button data-view="feed" onclick="switchView('feed')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
+                    <i data-lucide="layout-list" class="w-5 h-5 mr-2"></i> Global Feed
+                </button>
+                <button data-view="highlights" onclick="switchView('highlights')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
+                    <i data-lucide="camera" class="w-5 h-5 mr-2"></i> Highlights
+                </button>
+                <button data-view="chat" onclick="switchView('chat')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
+                    <i data-lucide="message-square" class="w-5 h-5 mr-2"></i> Chat
+                </button>
+            </nav>
+        </header>
+
+        <!-- Content Area -->
+        <main class="max-w-7xl mx-auto flex-grow p-4 w-full">
+            
+            <!-- HOME VIEW (NEW) -->
+            <div id="home-view" class="view-container home-content flex items-center justify-center min-h-screen p-4 -mt-20">
+                <!-- Video Background Placeholder -->
+                <div class="home-video-container">
+                    <div class="home-video">
+                        <!-- NOTE: This is a placeholder for a 4K video. To make it a 'live' background, uncomment the <video> tag below and insert a direct, high-quality MP4 URL. -->
+                        <!-- 
+                        <video autoplay loop muted playsinline class="home-video">
+                            <source src="YOUR_4K_VIDEO_URL.mp4" type="video/mp4">
+                        </video>
+                        -->
+                        <div class="home-overlay"></div>
+                    </div>
+                </div>
+                <!-- Content Overlay -->
+                <div class="relative z-10 text-center p-8 md:p-12 bg-black/70 backdrop-blur-sm rounded-2xl shadow-2xl max-w-2xl border-2 border-green-600">
+                    <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight">
+                        <span class="text-primary">U.Scout</span>: The Global Football Network
+                    </h1>
+                    <p class="text-lg md:text-xl text-gray-300 mb-8 font-medium">
+                        Connect with players, showcase your talent, and get noticed by scouts worldwide. Your next big career move starts here.
+                    </p>
+                    <button onclick="switchView('feed')" class="bg-green-600 text-white font-bold text-lg py-3 px-8 rounded-full shadow-lg hover:bg-green-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50">
+                        <i data-lucide="arrow-right" class="w-5 h-5 inline mr-2"></i> Join the Feed
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feed View -->
+            <div id="feed-view" class="view-container hidden">
+                <div class="flex flex-col md:flex-row gap-6">
+                    
+                    <!-- Left Sidebar (User Stats/Info) - Hidden on Mobile -->
+                    <div class="hidden md:block md:w-1/4">
+                        <div id="user-info-card" class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 sticky top-20">
+                            <h3 class="text-lg font-bold mb-2 text-gray-800 flex items-center">
+                                <i data-lucide="user-check" class="w-5 h-5 mr-2 text-green-600"></i> Player Hub
+                            </h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <p class="text-xs text-gray-500">Player Name</p>
+                                    <p id="profile-name-display" class="font-semibold text-gray-900 truncate">...</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Position</p>
+                                    <p id="profile-position-display" class="text-sm text-gray-700 font-medium">...</p>
+                                </div>
+                                <div>
+                                    <p class="text-xs text-gray-500">Club / Location</p>
+                                    <p id="profile-club-display" class="text-sm text-gray-700">...</p>
+                                </div>
+                                <div class="pt-2 border-t mt-4">
+                                    <p class="text-xs text-gray-500">Global User ID (Share to Connect)</p>
+                                    <code id="user-id-display" class="text-xs break-all bg-slate-100 p-1 rounded font-mono text-primary cursor-pointer" title="Click to Copy">Loading...</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Center Feed Content -->
+                    <div class="w-full md:w-3/4">
+                        <!-- Post Creation Card -->
+                        <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-slate-200">
+                            <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
+                                <i data-lucide="pen-tool" class="w-5 h-5 mr-2"></i> Share Your Update
+                            </h2>
+                            <textarea id="post-content" rows="3" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 resize-none text-gray-700" placeholder="What's happening on the pitch or off it? Share your thoughts, training updates, or insights..."></textarea>
+                            <div class="flex justify-end mt-3">
+                                <button id="post-button" onclick="handlePost()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-green-700 transition duration-150 disabled:bg-green-300" disabled>
+                                    Post Update
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Loading Indicator -->
+                        <div id="loading-indicator" class="text-center p-8 text-gray-500">
+                            <div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-primary border-t-transparent rounded-full mb-2"></div>
+                            <p>Loading the U.Scout Feed...</p>
+                        </div>
+
+                        <!-- Feed Container -->
+                        <div id="feed-container" class="space-y-6">
+                            <!-- Posts will be injected here by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Highlights (Reels) View - UPDATED -->
+            <div id="highlights-view" class="view-container hidden">
+                <h1 class="text-3xl font-extrabold text-primary mb-6 border-b pb-2">Top Player Highlights (Reels)</h1>
+                <p class="text-lg text-gray-600 mb-8">Upload your best skills, goals, and training clips to get seen by the community!</p>
+                
+                <!-- Highlight Submission Card (NEW) -->
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-slate-200">
+                    <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
+                        <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i> Submit Your Best Highlight
+                    </h2>
+                    
+                    <!-- NEW: File Upload Button/Label -->
+                    <label for="highlight-file" class="block w-full text-center py-4 border-2 border-dashed border-green-300 rounded-lg cursor-pointer bg-green-50 hover:bg-green-100 transition duration-150 mb-4">
+                        <i data-lucide="video" class="w-6 h-6 mx-auto mb-1 text-primary"></i>
+                        <span id="file-upload-label" class="text-sm font-semibold text-gray-700">Select a video file from your device (Max 60s simulated)</span>
+                    </label>
+                    <input type="file" id="highlight-file" accept="video/mp4,video/quicktime,video/webm" class="hidden">
+                    
+                    <div class="text-center text-sm text-gray-500 mb-4">-- OR --</div>
+                    
+                    <!-- Existing URL Input Section -->
+                    <input type="url" id="highlight-url" placeholder="Paste a public video link (e.g., YouTube) to share your skills..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700">
+                    
+                    <div class="flex justify-end mt-3">
+                        <button id="highlight-post-button" onclick="handleHighlightPost()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-green-700 transition duration-150">
+                            Share Highlight
+                        </button>
+                    </div>
+                    <p id="highlight-error" class="text-sm text-red-500 mt-2 hidden">Please provide a video file or a public link.</p>
+                </div>
+
+                <!-- Dynamic Container (replaces static grid) -->
+                <div id="highlights-container" class="highlight-grid">
+                    <div id="highlights-loading" class="col-span-full text-center p-8 text-gray-500">
+                        <div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-primary border-t-transparent rounded-full mb-2"></div>
+                        <p>Loading Highlights...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Chat View -->
+            <div id="chat-view" class="view-container hidden">
+                <div class="flex h-[80vh] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    
+                    <!-- Chat List (Left Pane) -->
+                    <div id="chat-list" class="w-full md:w-1/3 border-r border-slate-200 p-4 space-y-4 overflow-y-auto">
+                        
+                        <!-- Global Chat -->
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i data-lucide="messages-square" class="w-5 h-5 mr-2 text-primary"></i> Channels
+                        </h2>
+                        <div id="global-chat-room" data-chat-id="global_team_chat" onclick="openChat('global_team_chat', 'Global Team Chat')" 
+                            class="p-3 bg-green-50 hover:bg-green-100 rounded-lg cursor-pointer transition duration-150 border border-green-200">
+                            <p class="font-semibold text-primary">Global Team Chat</p>
+                            <p class="text-xs text-gray-500 truncate">Connect with players worldwide...</p>
+                        </div>
+                        
+                        <!-- NEW: Direct Message List -->
+                        <h3 class="text-sm font-bold text-gray-500 mt-6 border-t pt-4">Direct Messages</h3>
+                        <div id="dm-list-container" class="space-y-2">
+                            <div id="dm-list-loading" class="text-xs text-gray-400 text-center py-2">Loading users...</div>
+                            <!-- User list for DMs will be dynamically loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Chat Room (Right Pane) -->
+                    <div id="chat-room-container" class="w-full md:w-2/3 flex flex-col hidden md:flex">
+                        
+                        <!-- UPDATED Chat Header with Mobile Back Button and Call Controls -->
+                        <div id="chat-room-header" class="p-4 border-b border-slate-200 bg-slate-50 flex items-center">
+                            <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
+                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                            </button>
+                            <h3 id="chat-room-title" class="text-lg font-bold text-gray-800 flex-grow">Select a Chat</h3>
+                            
+                            <!-- NEW: Call Controls Container -->
+                            <div id="call-controls" class="flex items-center space-x-2">
+                                <button id="start-call-btn" onclick="startCallSimulation()" class="bg-green-100 text-green-600 hover:bg-green-200 p-2 rounded-full hidden transition duration-150" title="Start Video Call">
+                                    <i data-lucide="video" class="w-5 h-5"></i>
+                                </button>
+                                <button id="end-call-btn" onclick="endCallSimulation()" class="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full hidden transition duration-150" title="End Call">
+                                    <i data-lucide="phone-off" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- END UPDATED Chat Header -->
+                        
+                        <div id="messages-container" class="flex-grow p-4 space-y-3 overflow-y-auto custom-scrollbar">
+                            <!-- Messages will be rendered here -->
+                            <div id="chat-placeholder" class="text-center text-gray-500 mt-20">
+                                <i data-lucide="sparkles" class="w-8 h-8 mx-auto mb-2"></i>
+                                <p>Start a conversation in a global channel or DM a player!</p>
+                            </div>
+                        </div>
+                        
+                        <div id="chat-input-area" class="p-4 border-t border-slate-200 bg-white hidden">
+                            <div class="flex space-x-3">
+                                <input type="text" id="chat-message-input" placeholder="Type your message..." class="flex-grow p-3 border border-slate-300 rounded-full focus:ring-green-500 focus:border-green-500">
+                                <button onclick="sendChatMessage()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full hover:bg-green-700 transition duration-150">
+                                    Send
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Footer (Mobile Navigation) -->
+        <footer class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-xl z-20">
+            <nav class="flex justify-around">
+                <button data-view="home" onclick="switchView('home')" class="view-btn flex flex-col items-center p-3 text-primary active-nav">
+                    <i data-lucide="home" class="w-6 h-6"></i>
+                    <span class="text-xs font-medium mt-1">Home</span>
+                </button>
+                <button data-view="feed" onclick="switchView('feed')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
+                    <i data-lucide="layout-list" class="w-6 h-6"></i>
+                    <span class="text-xs font-medium mt-1">Feed</span>
+                </button>
+                <button data-view="highlights" onclick="switchView('highlights')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
+                    <i data-lucide="camera" class="w-6 h-6"></i>
+                    <span class="text-xs font-medium mt-1">Highlights</span>
+                </button>
+                <button data-view="chat" onclick="switchView('chat')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
+                    <i data-lucide="message-square" class="w-6 h-6"></i>
+                    <span class="text-xs font-medium mt-1">Chat</span>
+                </button>
+            </nav>
+        </footer>
+
+    </div>
+
+    <!-- Profile Edit Modal -->
+    <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 class="text-xl font-bold mb-4 text-primary">Edit Player Profile</h3>
+            <form id="profile-form">
+                <div class="mb-4">
+                    <label for="profile-name-input" class="block text-sm font-medium text-gray-700 mb-1">Full Name / Nickname</label>
+                    <input type="text" id="profile-name-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="profile-position-input" class="block text-sm font-medium text-gray-700 mb-1">Playing Position</label>
+                    <select id="profile-position-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                        <option value="Unspecified">Select Position</option>
+                        <option value="Goalkeeper">Goalkeeper</option>
+                        <option value="Defender">Defender</option>
+                        <option value="Midfielder">Midfielder</option>
+                        <option value="Forward">Forward</option>
+                        <option value="Coach/Staff">Coach/Staff</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label for="profile-club-input" class="block text-sm font-medium text-gray-700 mb-1">Current Club / Country</label>
+                    <input type="text" id="profile-club-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="bg-slate-200 text-gray-700 font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition duration-150">
+                        Cancel
+                    </button>
+                    <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition duration-150">
+                        Save Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Script Imports -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        setLogLevel('Debug');
+
+        // --- Global Variables (Mandatory Canvas Environment Variables) ---
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let currentUserId = null;
+        let currentUserProfile = {
+            name: 'Anonymous Player',
+            position: 'Unspecified',
+            club: 'Global Network'
+        };
+        let currentChatId = null;
+        let currentChatName = null;
+        let chatUnsubscribe = null;
+        let allUsers = []; // Stores all user profiles for DM list
+        let isCallActive = false; // NEW: Global state for call simulation
+
+        // --- Firestore Paths ---
+        const POSTS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_posts`;
+        const USERS_COLLECTION_PATH = `artifacts/${appId}/public/data/users`;
+        const CHATS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_chats`;
+        const HIGHLIGHTS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_highlights`; 
+
+        // --- Utility Functions ---
+
+        /**
+         * Formats a Firebase Timestamp object into a readable string (e.g., "1 hour ago").
+         * @param {Object} firebaseTimestamp - The timestamp object from Firestore.
+         * @returns {string} The formatted relative time string.
+         */
+        function formatTimestamp(firebaseTimestamp) {
+            if (!firebaseTimestamp || !firebaseTimestamp.seconds) return 'Just now';
+            const now = Date.now();
+            const past = firebaseTimestamp.toDate().getTime();
+            const seconds = Math.floor((now - past) / 1000);
+
+            if (seconds < 60) return `${seconds}s ago`;
+            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+            if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`;
+            return firebaseTimestamp.toDate().toLocaleDateString();
+        }
+
+        // --- View Management ---
+
+        /** Switches the active application view (home, feed, highlights, or chat). */
+        window.switchView = function(viewName) {
+            // Include 'home' in the view list
+            ['home', 'feed', 'highlights', 'chat'].forEach(view => {
+                const viewElement = document.getElementById(`${view}-view`);
+                if (viewElement) {
+                    viewElement.classList.toggle('hidden', view !== viewName);
+                }
+            });
+
+            // Update navigation active class for both desktop and mobile
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                const isMobileFooter = !btn.closest('header');
+                const isCurrentView = btn.getAttribute('data-view') === viewName;
+
+                if (isCurrentView) {
+                    btn.classList.add('active-nav');
+                    if (isMobileFooter) {
+                        btn.classList.remove('text-gray-500');
+                        btn.classList.add('text-primary');
+                    } else {
+                        btn.classList.remove('text-gray-300');
+                        btn.classList.add('text-white');
+                    }
+                } else {
+                    btn.classList.remove('active-nav');
+                    if (isMobileFooter) {
+                         btn.classList.remove('text-primary');
+                         btn.classList.add('text-gray-500');
+                    } else {
+                        btn.classList.remove('text-white');
+                        btn.classList.add('text-gray-300');
+                    }
+                }
+            });
+            
+            // Re-render lucide icons if the view changes
+            lucide.createIcons();
+            
+            // Special logic for data listeners
+            if (viewName === 'chat') {
+                listenToUsers(); // Start listening to users list when switching to chat
+                if (currentChatId) {
+                    // If a chat is already open, maintain the view state
+                    openChat(currentChatId, currentChatName, true); 
+                } else {
+                    // Reset to chat list view
+                    document.getElementById('chat-room-header').innerHTML = `
+                        <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
+                            <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                        </button>
+                        <h3 id="chat-room-title" class="text-lg font-bold text-gray-800 flex-grow">Select a Chat</h3>
+                        <div id="call-controls" class="flex items-center space-x-2">
+                             <button id="start-call-btn" onclick="startCallSimulation()" class="bg-green-100 text-green-600 hover:bg-green-200 p-2 rounded-full hidden transition duration-150" title="Start Video Call">
+                                <i data-lucide="video" class="w-5 h-5"></i>
+                            </button>
+                            <button id="end-call-btn" onclick="endCallSimulation()" class="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full hidden transition duration-150" title="End Call">
+                                <i data-lucide="phone-off" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    `;
+                    document.getElementById('chat-input-area').classList.add('hidden');
+                    // Ensure chat list is visible on mobile when no chat is selected
+                    const chatList = document.getElementById('chat-list');
+                    const chatRoomContainer = document.getElementById('chat-room-container');
+                    if (window.innerWidth < 768 && chatList && chatRoomContainer) {
+                        chatList.classList.remove('hidden');
+                        chatRoomContainer.classList.add('hidden');
+                    }
+                }
+            } else if (viewName === 'highlights') { 
+                listenToHighlights();
+            }
+        };
+
+        // --- Firebase Core Setup ---
+
+        /** Initializes Firebase app and services. */
+        function initFirebase() {
+            if (!firebaseConfig) {
+                console.error("Firebase configuration is missing.");
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Error: Firebase configuration not found. Cannot load feed.</p>';
+                // Set default view to home if Firebase init fails but DOM is ready
+                switchView('home'); 
+                return;
+            }
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                setupAuth();
+            } catch (error) {
+                console.error("Error initializing Firebase:", error);
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Error initializing Firebase. Check console for details.</p>';
+                switchView('home');
+            }
+        }
+
+        /** Handles authentication using the provided token or signs in anonymously. */
+        async function setupAuth() {
+            await setPersistence(auth, browserLocalPersistence);
+
+            if (initialAuthToken) {
+                try {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log("Signed in with custom token.");
+                } catch (error) {
+                    console.warn("Custom token sign-in failed. Falling back to anonymous sign-in:", error);
+                    await signInAnonymously(auth);
+                }
+            } else {
+                await signInAnonymously(auth);
+                console.log("Signed in anonymously.");
+            }
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    updateUserIdDisplay(currentUserId);
+                    await fetchUserProfile(currentUserId);
+                    
+                    // Enable post button once authenticated
+                    document.getElementById('post-button').disabled = false;
+                    document.getElementById('post-content').addEventListener('input', checkPostContent);
+                    
+                    // Start listening to the feed and chat
+                    listenToFeed();
+                    checkGlobalChatRoom(); 
+                } else {
+                    currentUserId = crypto.randomUUID(); // Fallback ID if auth fails unexpectedly
+                    updateUserIdDisplay(currentUserId);
+                    console.log("User logged out or state change detected.");
+                    listenToFeed();
+                    checkGlobalChatRoom();
+                }
+                // Set initial view to home after auth attempt
+                switchView('home'); 
+            });
+        }
+
+        /** Fetches or creates a user profile document. */
+        async function fetchUserProfile(userId) {
+            if (!db) return;
+            const userDocRef = doc(db, USERS_COLLECTION_PATH, userId);
+            try {
+                const docSnap = await getDoc(userDocRef);
+
+                if (docSnap.exists()) {
+                    currentUserProfile = docSnap.data();
+                } else {
+                    // Create default profile if none exists
+                    await setDoc(userDocRef, currentUserProfile);
+                }
+                updateProfileUI();
+
+            } catch (error) {
+                console.error("Error fetching/creating user profile:", error);
+            }
+        }
+
+        /** Updates the profile UI elements. */
+        function updateProfileUI() {
+            const { name, position, club } = currentUserProfile;
+            
+            // Set input values for modal
+            document.getElementById('profile-name-input').value = name;
+            document.getElementById('profile-position-input').value = position;
+            document.getElementById('profile-club-input').value = club;
+
+            // Set display values for sidebar and header
+            document.getElementById('profile-name-display').textContent = name;
+            document.getElementById('profile-position-display').textContent = position;
+            document.getElementById('profile-club-display').textContent = club;
+            document.getElementById('user-greeting').textContent = `Welcome, ${name.split(' ')[0]}!`;
+
+            lucide.createIcons(); // Re-render lucide icons if necessary
+        }
+
+        /** Updates the displayed user ID. */
+        function updateUserIdDisplay(userId) {
+            const idElement = document.getElementById('user-id-display');
+            idElement.textContent = userId;
+            idElement.onclick = () => {
+                document.execCommand('copy', false, userId);
+                idElement.textContent = 'Copied!';
+                setTimeout(() => { idElement.textContent = userId; }, 1500);
+            };
+        }
+        
+        // --- Feed Logic (Existing) ---
+
+        /** Sets up the real-time listener for the posts feed. */
+        function listenToFeed() {
+            if (!db) return;
+            const q = query(
+                collection(db, POSTS_COLLECTION_PATH),
+                orderBy('timestamp', 'desc')
+            );
+
+            onSnapshot(q, (snapshot) => {
+                const posts = [];
+                snapshot.forEach(doc => {
+                    posts.push({ id: doc.id, ...doc.data() });
+                });
+                renderFeed(posts);
+            }, (error) => {
+                console.error("Error listening to feed:", error);
+                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Error fetching feed data.</p>';
+            });
+        }
+
+        /** Renders the full list of posts to the feed container. */
+        function renderFeed(posts) {
+            const feedContainer = document.getElementById('feed-container');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            feedContainer.innerHTML = '';
+            loadingIndicator.classList.add('hidden');
+
+            if (posts.length === 0) {
+                feedContainer.innerHTML = `
+                    <div class="p-8 text-center text-gray-500 bg-white rounded-xl shadow-inner border border-dashed border-slate-300">
+                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2"></i>
+                        <p class="font-semibold text-lg">No updates yet!</p>
+                        <p>Be the first footballer to share your journey.</p>
+                    </div>
+                `;
+            } else {
+                posts.forEach(post => {
+                    const postElement = createPostElement(post);
+                    feedContainer.appendChild(postElement);
+                });
+            }
+            lucide.createIcons(); // Ensure all new icons are rendered
+        }
+
+        /** Creates the HTML element for a single post. */
+        function createPostElement(post) {
+            const { id, username, position, club, content, timestamp, userId, likes = [] } = post;
+            const liked = likes.includes(currentUserId);
+            const timeAgo = formatTimestamp(timestamp);
+
+            const postCard = document.createElement('div');
+            postCard.className = 'bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition duration-300';
+            postCard.innerHTML = `
+                <!-- Post Header -->
+                <div class="flex items-start mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4 text-green-700 font-bold text-xl border-2 border-green-300">
+                        ${username[0].toUpperCase()}
+                    </div>
+                    <div>
+                        <p class="font-bold text-gray-900">${username}</p>
+                        <p class="text-xs text-gray-500">${position} | ${club}</p>
+                        <p class="text-xs text-gray-400 mt-0.5">${timeAgo}</p>
+                    </div>
+                </div>
+
+                <!-- Post Content -->
+                <p class="text-gray-800 mb-4 whitespace-pre-wrap">${content}</p>
+
+                <!-- Post Footer (Actions) -->
+                <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+                    <button data-post-id="${id}" onclick="handleLike(this)"
+                        class="flex items-center space-x-2 text-sm font-semibold p-2 rounded-full transition duration-200 
+                        ${liked ? 'text-red-500 hover:bg-red-50' : 'text-gray-500 hover:text-green-700 hover:bg-green-50'}">
+                        <i data-lucide="${liked ? 'heart' : 'heart'}" class="${liked ? 'fill-red-500' : 'stroke-gray-500'} w-5 h-5 transition duration-200"></i>
+                        <span>${likes.length} ${likes.length === 1 ? 'Like' : 'Likes'}</span>
+                    </button>
+                    
+                    <span class="text-xs text-slate-400">User ID: ${userId.substring(0, 8)}...</span>
+                </div>
+            `;
+            return postCard;
+        }
+        
+        // --- Highlights Logic (UPDATED) ---
+
+        // NEW: Update file input label text on change
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('highlight-file');
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    const label = document.getElementById('file-upload-label');
+                    if (this.files.length > 0) {
+                        label.textContent = `Selected: ${this.files[0].name}`;
+                    } else {
+                        label.textContent = 'Select a video file from your device (Max 60s simulated)';
+                    }
+                });
+            }
+        });
+        
+        /** Sets up the real-time listener for the highlights feed. */
+        function listenToHighlights() {
+            if (!db) return;
+            
+            const highlightsLoading = document.getElementById('highlights-loading');
+            // FIX: Ensure classList access is protected
+            if(highlightsLoading) highlightsLoading.classList.remove('hidden');
+
+            const q = query(
+                collection(db, HIGHLIGHTS_COLLECTION_PATH),
+                orderBy('timestamp', 'desc')
+            );
+
+            onSnapshot(q, (snapshot) => {
+                const highlights = [];
+                snapshot.forEach(doc => {
+                    highlights.push({ id: doc.id, ...doc.data() });
+                });
+                renderHighlights(highlights);
+            }, (error) => {
+                console.error("Error listening to highlights:", error);
+                // FIX: Ensure innerHTML access is protected
+                if(highlightsLoading) {
+                    highlightsLoading.innerHTML = '<p class="text-red-500">Error fetching highlights data.</p>';
+                }
+            });
+        }
+
+        /** Renders the full list of highlights to the container. */
+        function renderHighlights(highlights) {
+            const highlightsContainer = document.getElementById('highlights-container');
+            const highlightsLoading = document.getElementById('highlights-loading');
+
+            // Check for existence of containers
+            if (!highlightsContainer) return;
+            
+            highlightsContainer.innerHTML = '';
+            // FIX: Ensure classList access is protected
+            if(highlightsLoading) highlightsLoading.classList.add('hidden');
+
+            if (highlights.length === 0) {
+                highlightsContainer.innerHTML = `
+                    <div class="col-span-full p-8 text-center text-gray-500 bg-white rounded-xl shadow-inner border border-dashed border-slate-300">
+                        <i data-lucide="video" class="w-10 h-10 mx-auto mb-2"></i>
+                        <p class="font-semibold text-lg">No highlights posted yet!</p>
+                        <p>Share your clips above to get scouted.</p>
+                    </div>
+                `;
+            } else {
+                highlights.forEach(highlight => {
+                    const highlightElement = createHighlightElement(highlight);
+                    highlightsContainer.appendChild(highlightElement);
+                });
+            }
+            lucide.createIcons();
+        }
+
+        /** Creates the HTML element for a single highlight card. */
+        function createHighlightElement(highlight) {
+            const { videoUrl, username, position, timestamp, title } = highlight; 
+            const timeAgo = formatTimestamp(timestamp);
+
+            const card = document.createElement('a');
+            card.href = videoUrl;
+            card.target = "_blank";
+            card.className = 'highlight-card rounded-xl shadow-xl flex flex-col justify-end p-3 relative overflow-hidden bg-gray-900 group cursor-pointer border-2 border-transparent hover:border-primary transition duration-300';
+            
+            // Simple visual placeholder for the video content
+            card.style.backgroundImage = 'url(https://placehold.co/400x700/16a34a/ffffff?text=VIDEO)';
+            card.style.backgroundSize = 'cover';
+            card.style.backgroundPosition = 'center';
+
+            card.innerHTML = `
+                <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-50 transition duration-300 flex items-center justify-center">
+                    <i data-lucide="play-circle" class="w-12 h-12 text-white opacity-80 group-hover:opacity-100 transition duration-300"></i>
+                </div>
+                <div class="z-10 bg-gradient-to-t from-black/80 to-transparent pt-8 text-white p-2">
+                    <p class="font-bold truncate">${title}</p> 
+                    <p class="text-xs text-green-300">${username} | ${position}</p> 
+                    <p class="text-[10px] text-gray-400 mt-1">${timeAgo}</p>
+                </div>
+            `;
+            return card;
+        }
+
+        /** Handles the submission of a new highlight link/file (UPDATED LOGIC). */
+        window.handleHighlightPost = async function() {
+            if (!currentUserId || !db) return;
+            
+            const urlInput = document.getElementById('highlight-url');
+            const fileInput = document.getElementById('highlight-file'); 
+            const errorElement = document.getElementById('highlight-error');
+            const postButton = document.getElementById('highlight-post-button');
+            
+            const videoUrl = urlInput.value.trim();
+            const videoFile = fileInput.files.length > 0 ? fileInput.files[0] : null;
+
+            let finalUrl = null;
+            let title = null;
+
+            if (videoFile) {
+                // --- Simulation of File Upload ---
+                if (!videoFile.type.startsWith('video/')) {
+                    errorElement.textContent = "Please select a valid video file.";
+                    errorElement.classList.remove('hidden');
+                    return;
+                }
+                
+                // Simulate successful upload to storage and fetching a URL
+                finalUrl = `https://placehold.co/400x700/16a34a/ffffff?text=FILE+UPLOADED`;
+                title = `Uploaded Clip: ${videoFile.name}`;
+                
+                // Clear file input state after "upload" simulation
+                fileInput.value = '';
+                document.getElementById('file-upload-label').textContent = 'Select a video file from your device (Max 60s simulated)';
+
+            } else if (videoUrl && videoUrl.startsWith('http')) {
+                // --- External URL Submission (Existing Logic) ---
+                finalUrl = videoUrl;
+                title = `External Link`; // Use a generic title for links
+                urlInput.value = ''; // Clear input on success
+            } else {
+                // --- Error Case ---
+                errorElement.textContent = "Please provide a video file or a public link.";
+                errorElement.classList.remove('hidden');
+                return;
+            }
+            
+            errorElement.classList.add('hidden');
+            postButton.disabled = true;
+            postButton.textContent = 'Sharing...';
+
+            const highlightData = {
+                userId: currentUserId,
+                username: currentUserProfile.name,
+                position: currentUserProfile.position,
+                club: currentUserProfile.club,
+                videoUrl: finalUrl, 
+                title: title, 
+                timestamp: serverTimestamp()
+            };
+
+            try {
+                await addDoc(collection(db, HIGHLIGHTS_COLLECTION_PATH), highlightData);
+                alertUser("Highlight shared successfully!", "success");
+            } catch (error) {
+                console.error("Error adding highlight:", error);
+                alertUser("Failed to share highlight.", "error");
+            } finally {
+                postButton.disabled = false;
+                postButton.textContent = 'Share Highlight';
+            }
+        };
+
+        // --- Chat Logic (NEW DM Feature) ---
+
+        /** Sets up the real-time listener for all user profiles to populate the DM list. */
+        function listenToUsers() {
+            if (!db) return;
+            
+            const dmListLoading = document.getElementById('dm-list-loading');
+            if(dmListLoading) dmListLoading.classList.remove('hidden');
+
+            const q = query(collection(db, USERS_COLLECTION_PATH), orderBy('name', 'asc'));
+
+            onSnapshot(q, (snapshot) => {
+                allUsers = [];
+                snapshot.forEach(doc => {
+                    const user = { id: doc.id, ...doc.data() };
+                    if (user.id !== currentUserId) {
+                        allUsers.push(user);
+                    }
+                });
+                renderDmList();
+            }, (error) => {
+                console.error("Error listening to users:", error);
+                if(dmListLoading) dmListLoading.textContent = 'Error loading users.';
+            });
+        }
+
+        /** Renders the list of users who can be DMed. */
+        function renderDmList() {
+            const dmListContainer = document.getElementById('dm-list-container');
+            const dmListLoading = document.getElementById('dm-list-loading');
+
+            if (!dmListContainer) return;
+            
+            dmListContainer.innerHTML = '';
+
+            if (allUsers.length === 0) {
+                 dmListContainer.innerHTML = '<div class="text-xs text-gray-500 text-center py-2">No other players found.</div>';
+            } else {
+                allUsers.forEach(user => {
+                    const userElement = document.createElement('div');
+                    userElement.className = 'p-3 hover:bg-slate-100 rounded-lg cursor-pointer transition duration-150 border border-slate-200';
+                    userElement.innerHTML = `
+                        <p class="font-semibold text-gray-900">${user.name}</p>
+                        <p class="text-xs text-gray-500 truncate">${user.position} | ${user.club}</p>
+                    `;
+                    userElement.onclick = () => startOrOpenDM(user.id, user.name);
+                    dmListContainer.appendChild(userElement);
+                });
+            }
+            if(dmListLoading) dmListLoading.classList.add('hidden');
+        }
+        
+        /** Generates a consistent private chat ID between two users. */
+        function getDmChatId(targetUserId) {
+            const ids = [currentUserId, targetUserId].sort();
+            return `DM_${ids[0]}_${ids[1]}`;
+        }
+        
+        /** Initiates or opens a direct message chat. */
+        window.startOrOpenDM = async function(targetUserId, targetUserName) {
+            if (!db || !currentUserId) return;
+
+            const dmChatId = getDmChatId(targetUserId);
+            const chatName = targetUserName; // Use target user's name for DM title
+            
+            // Check if DM chat room exists, if not, create it (no message needed, just the document)
+            const chatDocRef = doc(db, CHATS_COLLECTION_PATH, dmChatId);
+            const docSnap = await getDoc(chatDocRef);
+
+            if (!docSnap.exists()) {
+                await setDoc(chatDocRef, { 
+                    name: chatName,
+                    isGroup: false,
+                    participants: [currentUserId, targetUserId],
+                    createdAt: serverTimestamp()
+                });
+            }
+            
+            // Open the DM chat room
+            openChat(dmChatId, targetUserName);
+        }
+
+        /** Closes the current chat room and returns to the chat list on small screens. */
+        window.closeChatRoom = function() {
+            const chatList = document.getElementById('chat-list');
+            const chatRoomContainer = document.getElementById('chat-room-container');
+            const backButton = document.getElementById('chat-back-button');
+
+            // NEW: End the call simulation if one is active
+            if (isCallActive) {
+                endCallSimulation(true);
+            }
+
+            if (window.innerWidth < 768) {
+                if (chatList) chatList.classList.remove('hidden');
+                if (chatRoomContainer) chatRoomContainer.classList.add('hidden');
+                if (backButton) backButton.classList.add('hidden');
+                
+                // Reset chat room state
+                currentChatId = null;
+                currentChatName = null;
+                if (chatUnsubscribe) chatUnsubscribe();
+                
+                // Reset to show 'Select a Chat'
+                const callControls = document.getElementById('call-controls');
+                if (callControls) callControls.classList.add('hidden');
+                document.getElementById('chat-room-title').textContent = 'Select a Chat';
+                document.getElementById('chat-input-area')?.classList.add('hidden');
+                document.getElementById('chat-placeholder')?.classList.remove('hidden');
+            }
+        };
+
+        /** Ensures the public chat room exists for all users to join. */
+        async function checkGlobalChatRoom() {
+             if (!db) return;
+             const chatId = 'global_team_chat';
+             const chatDocRef = doc(db, CHATS_COLLECTION_PATH, chatId);
+             try {
+                const docSnap = await getDoc(chatDocRef);
+                if (!docSnap.exists()) {
+                    await setDoc(chatDocRef, { 
+                        name: "Global Team Chat", 
+                        isGroup: true,
+                        createdAt: serverTimestamp()
+                    });
+                }
+             } catch (error) {
+                console.error("Error ensuring global chat room exists:", error);
+             }
+        }
+
+        /** Opens a specific chat room and starts listening for messages. */
+        window.openChat = function(chatId, chatName, skipScroll = false) {
+            if (!db || !currentUserId) {
+                alertUser("Please ensure your profile is set up first.", "error");
+                return;
+            }
+
+            // Stop listening to the previous chat
+            if (chatUnsubscribe) {
+                chatUnsubscribe();
+            }
+            
+            // If opening a new chat, ensure call is ended from any previous chat
+            if (isCallActive) {
+                endCallSimulation(true);
+            }
+
+            currentChatId = chatId;
+            currentChatName = chatName;
+
+            const chatList = document.getElementById('chat-list');
+            const chatRoomContainer = document.getElementById('chat-room-container');
+            const chatTitle = document.getElementById('chat-room-title');
+            const inputArea = document.getElementById('chat-input-area');
+            const inputField = document.getElementById('chat-message-input');
+            const placeholder = document.getElementById('chat-placeholder');
+            const backButton = document.getElementById('chat-back-button');
+            const startCallBtn = document.getElementById('start-call-btn');
+            const endCallBtn = document.getElementById('end-call-btn');
+            const callControls = document.getElementById('call-controls');
+
+            // --- FIX: Add null checks for elements (addressing the TypeError) ---
+            if (!chatList || !chatRoomContainer || !chatTitle || !inputArea || !inputField || !placeholder || !backButton || !startCallBtn || !endCallBtn || !callControls) {
+                 console.error("Chat UI elements not fully loaded. Cannot open chat.");
+                 return; 
+            }
+            // --- END FIX ---
+
+            // Determine if it's a DM (not global)
+            const isDM = chatId !== 'global_team_chat';
+
+            // Mobile UI Toggle (Hide list, show room)
+            if (window.innerWidth < 768) { 
+                chatList.classList.add('hidden');
+                chatRoomContainer.classList.remove('hidden'); // Show the room
+                backButton.classList.remove('hidden'); // Show back button
+            }
+
+            // Update UI
+            chatTitle.textContent = chatName;
+            
+            inputArea.classList.remove('hidden');
+            inputField.focus();
+            placeholder.classList.add('hidden');
+            
+            // Show/Hide Call Buttons based on DM status
+            callControls.classList.remove('hidden');
+            startCallBtn.classList.toggle('hidden', !isDM);
+            endCallBtn.classList.add('hidden');
+            
+            // Start listening to the new chat
+            listenToChat(chatId, skipScroll);
+        };
+        
+        /** Sets up the real-time listener for messages in a chat room. */
+        function listenToChat(chatId, skipScroll) {
+            const messagesRef = collection(db, CHATS_COLLECTION_PATH, chatId, 'messages');
+            const q = query(messagesRef, orderBy('timestamp', 'asc'));
+
+            chatUnsubscribe = onSnapshot(q, (snapshot) => {
+                const messages = [];
+                snapshot.forEach(doc => {
+                    messages.push({ id: doc.id, ...doc.data() });
+                });
+                renderMessages(messages, skipScroll);
+            }, (error) => {
+                console.error("Error listening to chat messages:", error);
+            });
+        }
+
+        /** Renders messages to the chat interface. */
+        function renderMessages(messages, skipScroll) {
+            const container = document.getElementById('messages-container');
+            if (!container) return; // safety check
+            container.innerHTML = '';
+            
+            messages.forEach(msg => {
+                const isMine = msg.userId === currentUserId;
+                const messageEl = document.createElement('div');
+                messageEl.className = `flex ${isMine ? 'justify-end' : 'justify-start'}`;
+                
+                // NEW: Check for system message type
+                if (msg.type === 'system') {
+                    messageEl.className = 'text-center text-sm text-gray-500 py-2';
+                    const messageText = msg.text.replace(/\[CALL_[A-Z]+\]/, '').trim();
+                    messageEl.innerHTML = `<span class="bg-slate-100 px-3 py-1 rounded-full text-xs">${messageText}</span>`;
+                } else {
+                    // Standard message rendering
+                    messageEl.innerHTML = `
+                        <div class="max-w-xs sm:max-w-md p-3 rounded-xl shadow-md ${isMine ? 'bg-green-600 text-white rounded-br-none' : 'bg-slate-200 text-gray-800 rounded-tl-none'}">
+                            <p class="text-xs font-bold ${isMine ? 'text-green-200' : 'text-primary'}">${msg.username}</p>
+                            <p class="text-sm mt-0.5 whitespace-pre-wrap">${msg.text}</p>
+                            <p class="text-[10px] text-right mt-1 ${isMine ? 'text-green-300' : 'text-gray-500'}">${formatTimestamp(msg.timestamp)}</p>
+                        </div>
+                    `;
+                }
+                container.appendChild(messageEl);
+            });
+            
+            // Auto-scroll to the bottom unless explicitly skipped (e.g., during view switch)
+            if (!skipScroll) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        
+        /** Sends a message to the currently open chat. */
+        window.sendChatMessage = async function() {
+            const input = document.getElementById('chat-message-input');
+            const messageText = input.value.trim();
+            
+            if (!messageText || !currentChatId || !db || !currentUserId) return;
+
+            const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+            
+            const messageData = {
+                userId: currentUserId,
+                username: currentUserProfile.name,
+                text: messageText,
+                type: 'standard',
+                timestamp: serverTimestamp()
+            };
+
+            try {
+                // Disable input while sending to prevent double-post
+                input.disabled = true;
+                await addDoc(messagesRef, messageData);
+                input.value = ''; // Clear input on success
+            } catch (error) {
+                console.error("Error sending message:", error);
+                alertUser("Failed to send message.", "error");
+            } finally {
+                input.disabled = false;
+                input.focus();
+            }
+        };
+
+        // Allow sending message with Enter key
+        document.getElementById('chat-message-input')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+
+
+        // --- Call Simulation Logic (NEW) ---
+
+        /** Updates the chat UI to reflect the call state. */
+        function updateCallUI() {
+            const startBtn = document.getElementById('start-call-btn');
+            const endBtn = document.getElementById('end-call-btn');
+            const inputArea = document.getElementById('chat-input-area');
+            const chatHeader = document.getElementById('chat-room-header');
+
+            if (!startBtn || !endBtn || !inputArea || !chatHeader) return;
+
+            const isDM = currentChatId && currentChatId !== 'global_team_chat';
+            
+            // If a call is active, hide chat input and show end button
+            if (isCallActive && isDM) {
+                startBtn.classList.add('hidden');
+                endBtn.classList.remove('hidden');
+                inputArea.classList.add('hidden');
+                
+                // Add or update the call banner
+                let callBanner = document.getElementById('call-banner');
+                if (!callBanner) {
+                    callBanner = document.createElement('div');
+                    callBanner.id = 'call-banner';
+                    callBanner.className = 'bg-green-100 text-green-800 p-2 text-center font-medium border-b border-green-300 animate-pulse';
+                    chatHeader.after(callBanner);
+                }
+                callBanner.innerHTML = `<i data-lucide="video" class="w-4 h-4 inline mr-2"></i> Call in progress with ${currentChatName}... (Simulated)`;
+                lucide.createIcons();
+
+            } else {
+                // Not active or in global chat: show start button (if DM) and chat input
+                startBtn.classList.toggle('hidden', !isDM);
+                endBtn.classList.add('hidden');
+                inputArea.classList.remove('hidden');
+                
+                // Remove banner
+                document.getElementById('call-banner')?.remove();
+            }
+        }
+
+        /** Initiates the simulated call. */
+        window.startCallSimulation = async function() {
+            if (!currentChatId || currentChatId === 'global_team_chat' || isCallActive) return;
+
+            const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+            
+            // Send system message to chat history
+            const messageData = {
+                userId: currentUserId,
+                username: currentUserProfile.name,
+                text: `[CALL_INITIATED] ${currentUserProfile.name} is starting a video call.`,
+                type: 'system',
+                timestamp: serverTimestamp()
+            };
+
+            try {
+                await addDoc(messagesRef, messageData);
+                isCallActive = true;
+                updateCallUI();
+                alertUser(`Starting simulated call with ${currentChatName}...`, "info");
+            } catch (error) {
+                console.error("Error starting call simulation:", error);
+                alertUser("Failed to initiate call.", "error");
+            }
+        };
+
+        /** Ends the simulated call. */
+        window.endCallSimulation = async function(silent = false) {
+            if (!currentChatId || currentChatId === 'global_team_chat' || !isCallActive) return;
+
+            const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
+            
+            // Send system message to chat history
+            const messageData = {
+                userId: currentUserId,
+                username: currentUserProfile.name,
+                text: `[CALL_ENDED] ${currentUserProfile.name} ended the call.`,
+                type: 'system',
+                timestamp: serverTimestamp()
+            };
+
+            try {
+                await addDoc(messagesRef, messageData);
+                isCallActive = false;
+                updateCallUI();
+                if (!silent) {
+                    alertUser(`Call with ${currentChatName} ended.`, "success");
+                }
+            } catch (error) {
+                console.error("Error ending call simulation:", error);
+            }
+        };
+
+        // --- General Event Handlers (Existing) ---
+        
+        /** Validates if post content is available to enable the button. */
+        function checkPostContent() {
+            const content = document.getElementById('post-content').value.trim();
+            document.getElementById('post-button').disabled = content.length === 0;
+        }
+
+        /** Handles the creation of a new post. */
+        window.handlePost = async function() {
+            const contentInput = document.getElementById('post-content');
+            const content = contentInput.value.trim();
+            
+            if (!content || !currentUserId || !db) return;
+
+            document.getElementById('post-button').disabled = true;
+
+            const postData = {
+                userId: currentUserId,
+                username: currentUserProfile.name,
+                position: currentUserProfile.position,
+                club: currentUserProfile.club,
+                content: content,
+                timestamp: serverTimestamp(),
+                likes: []
+            };
+
+            try {
+                await addDoc(collection(db, POSTS_COLLECTION_PATH), postData);
+                contentInput.value = ''; // Clear input on success
+                checkPostContent();
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                document.getElementById('post-button').disabled = false;
+                alertUser("Failed to post update. Check connection and console.", "error");
+            }
+        };
+
+        /** Toggles the like status of a post. */
+        window.handleLike = async function(buttonElement) {
+            if (!currentUserId || !db) return;
+            const postId = buttonElement.getAttribute('data-post-id');
+            const postDocRef = doc(db, POSTS_COLLECTION_PATH, postId);
+            
+            try {
+                const docSnap = await getDoc(postDocRef);
+                if (!docSnap.exists()) return;
+                
+                const postData = docSnap.data();
+                const likes = postData.likes || [];
+                
+                if (likes.includes(currentUserId)) {
+                    // Unlike
+                    await updateDoc(postDocRef, {
+                        likes: arrayRemove(currentUserId)
+                    });
+                } else {
+                    // Like
+                    await updateDoc(postDocRef, {
+                        likes: arrayUnion(currentUserId)
+                    });
+                }
+            } catch (error) {
+                console.error("Error toggling like:", error);
+            }
+        };
+
+        /** Handles saving the profile form data. */
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!currentUserId || !db) return;
+
+            const newName = document.getElementById('profile-name-input').value.trim() || 'Anonymous Player';
+            const newPosition = document.getElementById('profile-position-input').value;
+            const newClub = document.getElementById('profile-club-input').value.trim() || 'Global Network';
+            
+            const newProfile = {
+                name: newName,
+                position: newPosition,
+                club: newClub
+            };
+
+            const userDocRef = doc(db, USERS_COLLECTION_PATH, currentUserId);
+            
+            try {
+                // Update profile in Firestore
+                await setDoc(userDocRef, newProfile, { merge: true });
+                currentUserProfile = newProfile;
+                updateProfileUI(); // Update UI immediately
+
+                // Close modal
+                document.getElementById('profile-modal').classList.add('hidden');
+                alertUser("Profile updated successfully! New posts will use this profile.", "success");
+                
+                // Re-listen to users to update the DM list immediately if name changed
+                listenToUsers(); 
+            } catch (error) {
+                console.error("Error saving profile:", error);
+                alertUser("Failed to save profile. Please try again.", "error");
+            }
+        });
+
+        /** Simple custom alert/message box function (replaces browser alert()). */
+        function alertUser(message, type = 'info') {
+            console.log(`[Message: ${type.toUpperCase()}] ${message}`);
+
+            const alertBox = document.createElement('div');
+            
+            const baseClasses = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl text-white font-semibold transition-transform duration-500 transform translate-y-0';
+            let typeClasses = 'bg-slate-700'; // Default neutral dark background
+
+            if (type === 'success') {
+                typeClasses = 'bg-green-600';
+            } else if (type === 'error') {
+                typeClasses = 'bg-red-600';
+            }
+
+            alertBox.className = `${baseClasses} ${typeClasses}`;
+            alertBox.textContent = message;
+
+            document.body.appendChild(alertBox);
+
+            setTimeout(() => {
+                alertBox.classList.add('translate-y-[-100%]', 'opacity-0');
+                alertBox.addEventListener('transitionend', () => alertBox.remove());
+            }, 3000);
+        }
+
+        // --- Initialization ---
+        window.onload = initFirebase;
+        
+    </script>
+</body>
+</html>
