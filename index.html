@@ -110,6 +110,10 @@
              border-left: 3px solid #16a34a; /* green-600 */
              padding-left: calc(0.75rem - 3px); /* Adjust padding due to border */
         }
+        /* Confirmation Modal Styles */
+        #confirmation-modal {
+            transition: opacity 0.3s ease;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -383,7 +387,7 @@
 
     </div>
 
-    <!-- Profile Edit Modal -->
+    <!-- Profile Edit Modal (UPDATED with Search, Requests, and Admin Tools) -->
     <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
             <h3 class="text-xl font-bold mb-4 text-primary">Edit Player Profile</h3>
@@ -416,6 +420,63 @@
                     </button>
                 </div>
             </form>
+
+            <!-- User Search Feature -->
+            <div class="mt-8 pt-4 border-t border-slate-200">
+                <h3 class="text-lg font-bold mb-3 text-primary flex items-center">
+                    <i data-lucide="search" class="w-5 h-5 mr-2"></i> Player Search & Connect
+                </h3>
+                <div class="flex space-x-2 mb-3">
+                    <input type="text" id="user-search-input" placeholder="Search by name..." class="flex-grow p-2 border border-slate-300 rounded-lg">
+                    <button onclick="searchUsers()" class="bg-primary text-white font-semibold px-4 rounded-lg hover:bg-gray-700 transition duration-150">
+                        Search
+                    </button>
+                </div>
+                <div id="user-search-results" class="max-h-40 overflow-y-auto space-y-2">
+                    <p class="text-sm text-gray-500 text-center py-2">Enter a name and hit search to find other players.</p>
+                </div>
+            </div>
+
+            <!-- Pending Requests Indicator -->
+            <div class="mt-8 pt-4 border-t border-slate-200">
+                 <h3 class="text-lg font-bold mb-3 text-primary flex items-center">
+                    <i data-lucide="users" class="w-5 h-5 mr-2"></i> Friend Requests
+                </h3>
+                <div id="pending-requests-list" class="max-h-40 overflow-y-auto space-y-2">
+                    <p class="text-sm text-gray-500 text-center py-2">No pending requests.</p>
+                </div>
+            </div>
+            
+            <!-- Admin Cleanup Feature -->
+            <div class="mt-8 pt-4 border-t border-slate-200">
+                <h3 class="text-lg font-bold mb-3 text-red-600 flex items-center">
+                    <i data-lucide="shield-off" class="w-5 h-5 mr-2"></i> Admin Tools (Cleanup)
+                </h3>
+                <button id="delete-anonymous-btn" onclick="confirmDeleteAnonymous()" class="w-full bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-red-600 transition duration-150 disabled:bg-red-300" disabled>
+                    <i data-lucide="trash-2" class="w-5 h-5 inline mr-2"></i> 
+                    Delete Anonymous Accounts (<span id="anonymous-count">0</span>)
+                </button>
+                <p class="text-xs text-red-500 mt-2 text-center">Caution: This action is permanent and applies to all 'Anonymous Player' profiles except yours.</p>
+            </div>
+
+        </div>
+    </div>
+    
+    <!-- Custom Confirmation Modal (Replaces window.confirm) -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[60] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 transform scale-100 opacity-100 transition-all duration-300">
+            <h3 id="confirm-title" class="text-xl font-bold mb-3 text-red-700 flex items-center">
+                <i data-lucide="alert-triangle" class="w-6 h-6 mr-2"></i> Confirmation
+            </h3>
+            <p id="confirm-message" class="text-gray-700 mb-6">Are you sure?</p>
+            <div class="flex justify-end space-x-3">
+                <button onclick="closeConfirmationModal()" class="bg-slate-200 text-gray-700 font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition duration-150">
+                    Cancel
+                </button>
+                <button id="confirm-action-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-full hover:bg-red-600 transition duration-150">
+                    Confirm
+                </button>
+            </div>
         </div>
     </div>
     
@@ -423,7 +484,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // FIX: Added 'where', 'writeBatch', 'deleteDoc' imports for search and admin features.
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDocs, where, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         setLogLevel('Debug');
@@ -452,13 +514,17 @@
         let currentUserProfile = {
             name: 'Anonymous Player',
             position: 'Unspecified',
-            club: 'Global Network'
+            club: 'Global Network',
+            friendList: [], // User IDs of accepted friends
+            sentRequests: [], // User IDs of requests sent by me
+            receivedRequests: [], // User IDs of requests received by me
         };
         let currentChatId = null;
         let currentChatName = null;
         let chatUnsubscribe = null;
         let allUsers = []; // Stores all user profiles for DM list
         let isCallActive = false; // Global state for call simulation
+        let anonymousUserIds = []; // Stores IDs of anonymous users for admin tool
 
         // --- Firestore Paths ---
         const POSTS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_posts`;
@@ -613,7 +679,9 @@
                 if (user) {
                     currentUserId = user.uid;
                     updateUserIdDisplay(currentUserId);
-                    await fetchUserProfile(currentUserId);
+                    // NEW: Start real-time listener for user profile
+                    listenToUserProfile(currentUserId); 
+                    listenToAnonymousUsersCount();
                     
                     // Enable post button once authenticated
                     document.getElementById('post-button').disabled = false;
@@ -634,24 +702,31 @@
             });
         }
 
-        /** Fetches or creates a user profile document. */
-        async function fetchUserProfile(userId) {
-            if (!db) return;
+        /** Sets up a real-time listener for the current user's profile. */
+        function listenToUserProfile(userId) {
+            if (!db || !userId) return;
             const userDocRef = doc(db, USERS_COLLECTION_PATH, userId);
-            try {
-                const docSnap = await getDoc(userDocRef);
 
+            onSnapshot(userDocRef, async (docSnap) => {
                 if (docSnap.exists()) {
-                    currentUserProfile = docSnap.data();
+                    // Update global state with friend fields initialized to empty arrays if missing
+                    currentUserProfile = {
+                        ...docSnap.data(),
+                        friendList: docSnap.data().friendList || [],
+                        sentRequests: docSnap.data().sentRequests || [],
+                        receivedRequests: docSnap.data().receivedRequests || [],
+                    };
                 } else {
                     // Create default profile if none exists
                     await setDoc(userDocRef, currentUserProfile);
+                    // The onSnapshot listener will fire again with the new document
+                    return;
                 }
                 updateProfileUI();
-
-            } catch (error) {
-                console.error("Error fetching/creating user profile:", error);
-            }
+                renderPendingRequests(); // Render friend request notifications
+            }, (error) => {
+                console.error("Error listening to user profile:", error);
+            });
         }
 
         /** Updates the profile UI elements. */
@@ -677,9 +752,14 @@
             const idElement = document.getElementById('user-id-display');
             idElement.textContent = userId;
             idElement.onclick = () => {
-                document.execCommand('copy', false, userId);
-                idElement.textContent = 'Copied!';
-                setTimeout(() => { idElement.textContent = userId; }, 1500);
+                // Use execCommand for broader compatibility in iFrames
+                navigator.clipboard.writeText(userId).then(() => {
+                    idElement.textContent = 'Copied!';
+                    setTimeout(() => { idElement.textContent = userId; }, 1500);
+                }).catch(err => {
+                    console.error('Could not copy text: ', err);
+                    alertUser('Failed to copy ID. Check console for details.', 'error');
+                });
             };
         }
         
@@ -1144,7 +1224,13 @@
             }
 
             // Update UI
-            chatTitle.textContent = chatName; // This is where the DM's person's name is set
+            // FIX: Added explicit check on chatTitle variable to prevent TypeError 
+            if (chatTitle) { 
+                chatTitle.textContent = chatName; // This is where the DM's person's name is set
+            } else {
+                console.error("Chat title element (chat-room-title) missing during openChat execution after initial checks.");
+                return;
+            }
             
             inputArea.classList.remove('hidden');
             inputField.focus();
@@ -1421,6 +1507,7 @@
             const newClub = document.getElementById('profile-club-input').value.trim() || 'Global Network';
             
             const newProfile = {
+                ...currentUserProfile, // Keep friend lists intact
                 name: newName,
                 position: newPosition,
                 club: newClub
@@ -1431,8 +1518,8 @@
             try {
                 // Update profile in Firestore
                 await setDoc(userDocRef, newProfile, { merge: true });
-                currentUserProfile = newProfile;
-                updateProfileUI(); // Update UI immediately
+                // Note: currentUserProfile is updated via the onSnapshot listener, but we can set the UI manually too
+                updateProfileUI(); 
 
                 // Close modal
                 document.getElementById('profile-modal').classList.add('hidden');
@@ -1446,6 +1533,296 @@
             }
         });
 
+        // --- NEW: Friend System Logic ---
+        
+        /** Renders the list of received friend requests in the profile modal. */
+        function renderPendingRequests() {
+            const container = document.getElementById('pending-requests-list');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            const requests = currentUserProfile.receivedRequests;
+
+            if (requests.length === 0) {
+                 container.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">No pending requests.</p>';
+            } else {
+                requests.forEach(senderId => {
+                    // Try to find the user in allUsers list, default if not found
+                    const sender = allUsers.find(u => u.id === senderId) || { name: `User ID: ${senderId.substring(0, 8)}...`, position: 'Player', club: 'Unknown' };
+                    const item = document.createElement('div');
+                    item.className = 'flex justify-between items-center p-2 bg-yellow-50 rounded-lg border border-yellow-200';
+                    item.innerHTML = `
+                        <div>
+                            <p class="font-semibold text-gray-800">${sender.name}</p>
+                            <p class="text-xs text-gray-500">${sender.position} | ${sender.club}</p>
+                        </div>
+                        <button onclick="acceptFriendRequest('${senderId}')" class="bg-green-600 text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-green-700 transition duration-150">
+                            Accept
+                        </button>
+                    `;
+                    container.appendChild(item);
+                });
+            }
+            lucide.createIcons();
+        }
+
+        /** Searches user profiles by name using prefix matching. */
+        window.searchUsers = async function() {
+            if (!db) return;
+            
+            const searchInput = document.getElementById('user-search-input');
+            const resultsContainer = document.getElementById('user-search-results');
+            const searchTerm = searchInput.value.trim();
+
+            resultsContainer.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">Searching...</p>';
+            
+            if (searchTerm.length < 2) {
+                resultsContainer.innerHTML = '<p class="text-sm text-red-500 text-center py-2">Please enter at least 2 characters.</p>';
+                return;
+            }
+
+            try {
+                // Perform prefix search (Firestore range query for string fields)
+                // Note: Indexing 'name' field is highly recommended in a real app for this query.
+                const q = query(
+                    collection(db, USERS_COLLECTION_PATH),
+                    where('name', '>=', searchTerm),
+                    where('name', '<=', searchTerm + '\uf8ff')
+                );
+
+                const querySnapshot = await getDocs(q);
+                const results = [];
+                querySnapshot.forEach(doc => {
+                    const user = { id: doc.id, ...doc.data() };
+                    if (user.id !== currentUserId) { // Don't show current user
+                        results.push(user);
+                    }
+                });
+                renderSearchResults(results);
+
+            } catch (error) {
+                console.error("Error searching users:", error);
+                resultsContainer.innerHTML = '<p class="text-sm text-red-500 text-center py-2">An error occurred during search.</p>';
+            }
+        };
+
+        /** Renders the results of the user search. */
+        function renderSearchResults(users) {
+            const container = document.getElementById('user-search-results');
+            container.innerHTML = '';
+
+            if (users.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">No players found matching your search.</p>';
+                return;
+            }
+
+            users.forEach(user => {
+                const isFriend = currentUserProfile.friendList.includes(user.id);
+                const requestSent = currentUserProfile.sentRequests.includes(user.id);
+                const requestReceived = currentUserProfile.receivedRequests.includes(user.id);
+
+                let buttonHtml = '';
+                if (isFriend) {
+                    buttonHtml = `<span class="text-xs text-green-600 font-semibold py-1 px-3">Friends</span>`;
+                } else if (requestReceived) {
+                    buttonHtml = `<button onclick="acceptFriendRequest('${user.id}')" class="bg-yellow-500 text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-yellow-600">Accept</button>`;
+                } else if (requestSent) {
+                    buttonHtml = `<span class="text-xs text-slate-500 py-1 px-3">Pending</span>`;
+                } else {
+                    buttonHtml = `<button onclick="sendFriendRequest('${user.id}')" class="bg-primary text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-gray-700">Add Friend</button>`;
+                }
+                
+                const item = document.createElement('div');
+                item.className = 'flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition duration-150';
+                item.innerHTML = `
+                    <div class="flex items-center">
+                        <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center mr-2 text-green-800 font-bold text-sm">
+                            ${user.name[0].toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-gray-800">${user.name}</p>
+                            <p class="text-xs text-gray-500">${user.position} | ${user.club}</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="startOrOpenDM('${user.id}', '${user.name}')" class="bg-slate-200 text-gray-700 text-xs font-semibold py-1 px-3 rounded-full hover:bg-slate-300">DM</button>
+                        ${buttonHtml}
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+            lucide.createIcons();
+        }
+
+        /** Sends a friend request to a target user. */
+        window.sendFriendRequest = async function(targetUserId) {
+            if (!db || !currentUserId || targetUserId === currentUserId) return;
+
+            const myDocRef = doc(db, USERS_COLLECTION_PATH, currentUserId);
+            const targetDocRef = doc(db, USERS_COLLECTION_PATH, targetUserId);
+
+            try {
+                // 1. Add targetUserId to my sentRequests list
+                await updateDoc(myDocRef, {
+                    sentRequests: arrayUnion(targetUserId)
+                });
+
+                // 2. Add myUserId to target's receivedRequests list
+                await updateDoc(targetDocRef, {
+                    receivedRequests: arrayUnion(currentUserId)
+                });
+
+                alertUser(`Friend request sent to ${targetUserId.substring(0, 8)}...`, "success");
+                // Refresh search results to show "Pending" status
+                searchUsers(); 
+
+            } catch (error) {
+                console.error("Error sending friend request:", error);
+                alertUser("Failed to send friend request.", "error");
+            }
+        };
+
+        /** Accepts a friend request from a sender user. */
+        window.acceptFriendRequest = async function(senderId) {
+            if (!db || !currentUserId || senderId === currentUserId) return;
+
+            const myDocRef = doc(db, USERS_COLLECTION_PATH, currentUserId);
+            const senderDocRef = doc(db, USERS_COLLECTION_PATH, senderId);
+
+            try {
+                // 1. Remove senderId from my receivedRequests and add to my friendList
+                await updateDoc(myDocRef, {
+                    receivedRequests: arrayRemove(senderId),
+                    friendList: arrayUnion(senderId)
+                });
+                
+                // 2. Remove myUserId from sender's sentRequests and add to sender's friendList
+                await updateDoc(senderDocRef, {
+                    sentRequests: arrayRemove(currentUserId),
+                    friendList: arrayUnion(currentUserId)
+                });
+
+                alertUser(`Friend request from ${senderId.substring(0, 8)}... accepted!`, "success");
+                // Re-render UI elements that show status
+                renderPendingRequests();
+                searchUsers(); // Update search if open
+
+            } catch (error) {
+                console.error("Error accepting friend request:", error);
+                alertUser("Failed to accept friend request.", "error");
+            }
+        };
+
+        // --- NEW: Admin Cleanup Logic ---
+
+        /** Listener to fetch and update the count of anonymous users. */
+        function listenToAnonymousUsersCount() {
+            if (!db) return;
+
+            // Only query documents where the name field is exactly 'Anonymous Player'
+            const q = query(
+                collection(db, USERS_COLLECTION_PATH),
+                where('name', '==', 'Anonymous Player')
+            );
+
+            onSnapshot(q, (snapshot) => {
+                anonymousUserIds = [];
+                snapshot.forEach(doc => {
+                    if (doc.id !== currentUserId) { // Don't allow deleting current user
+                        anonymousUserIds.push(doc.id);
+                    }
+                });
+                const countEl = document.getElementById('anonymous-count');
+                if (countEl) {
+                    countEl.textContent = anonymousUserIds.length;
+                }
+                const deleteBtn = document.getElementById('delete-anonymous-btn');
+                if (deleteBtn) {
+                    deleteBtn.disabled = anonymousUserIds.length === 0;
+                }
+            }, (error) => {
+                console.error("Error listening to anonymous users count:", error);
+            });
+        }
+
+        /** Admin: Confirms and deletes all profiles where name is 'Anonymous Player'. */
+        window.confirmDeleteAnonymous = function() {
+            if (!db || anonymousUserIds.length === 0) {
+                alertUser("No anonymous accounts found to delete.", "info");
+                return;
+            }
+
+            // Custom confirmation dialog (replacing native alert/confirm)
+            showConfirmationModal({
+                title: "Confirm Deletion",
+                message: `Are you sure you want to permanently delete ${anonymousUserIds.length} anonymous user profiles? This action cannot be undone.`,
+                confirmText: "Delete Permanently",
+                onConfirm: deleteAnonymousUsers
+            });
+        };
+        
+        /** Admin: Executes the deletion of anonymous user profiles. */
+        async function deleteAnonymousUsers() {
+            if (!db || anonymousUserIds.length === 0) return;
+
+            const batch = writeBatch(db);
+            
+            anonymousUserIds.forEach(userId => {
+                const userDocRef = doc(db, USERS_COLLECTION_PATH, userId);
+                batch.delete(userDocRef);
+            });
+
+            const deleteBtn = document.getElementById('delete-anonymous-btn');
+            deleteBtn.disabled = true;
+            deleteBtn.textContent = `Deleting ${anonymousUserIds.length} accounts...`;
+
+            try {
+                await batch.commit();
+                alertUser(`Successfully deleted ${anonymousUserIds.length} anonymous accounts.`, "success");
+            } catch (error) {
+                console.error("Error deleting anonymous users:", error);
+                alertUser("Failed to delete anonymous accounts.", "error");
+            } finally {
+                // The listener will update the UI automatically
+            }
+        }
+        
+        // --- Custom Modal Functions (Replaces native browser functions) ---
+        let currentConfirmationAction = null;
+
+        /** Shows a generic confirmation modal. */
+        function showConfirmationModal({ title, message, confirmText, onConfirm }) {
+            const modal = document.getElementById('confirmation-modal');
+            const titleEl = document.getElementById('confirm-title');
+            const messageEl = document.getElementById('confirm-message');
+            const actionBtn = document.getElementById('confirm-action-btn');
+
+            if (modal) modal.classList.remove('hidden');
+            if (titleEl) titleEl.textContent = title;
+            if (messageEl) messageEl.textContent = message;
+            if (actionBtn) actionBtn.textContent = confirmText;
+
+            // Set the action handler
+            currentConfirmationAction = onConfirm;
+
+            // Re-attach the click listener
+            if (actionBtn) {
+                actionBtn.onclick = () => {
+                    if (currentConfirmationAction) {
+                        currentConfirmationAction();
+                    }
+                    closeConfirmationModal();
+                };
+            }
+            lucide.createIcons();
+        }
+
+        /** Hides the custom confirmation modal. */
+        window.closeConfirmationModal = function() {
+            document.getElementById('confirmation-modal')?.classList.add('hidden');
+            currentConfirmationAction = null; // Clear the action
+        };
+        
         /** Simple custom alert/message box function (replaces browser alert()). */
         function alertUser(message, type = 'info') {
             console.log(`[Message: ${type.toUpperCase()}] ${message}`);
