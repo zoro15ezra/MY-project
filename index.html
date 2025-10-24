@@ -104,6 +104,12 @@
         .home-content {
             z-index: 2;
         }
+        /* Active chat list item style */
+        .active-chat-item {
+             background-color: #f1f5f9; /* slate-100 */
+             border-left: 3px solid #16a34a; /* green-600 */
+             padding-left: calc(0.75rem - 3px); /* Adjust padding due to border */
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -518,9 +524,6 @@
                 }
             });
             
-            // Re-render lucide icons if the view changes
-            lucide.createIcons();
-            
             // Special logic for data listeners
             if (viewName === 'chat') {
                 listenToUsers(); // Start listening to users list when switching to chat
@@ -529,21 +532,26 @@
                     openChat(currentChatId, currentChatName, true); 
                 } else {
                     // Reset to chat list view
-                    document.getElementById('chat-room-header').innerHTML = `
-                        <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
-                            <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                        </button>
-                        <h3 id="chat-room-title" class="text-lg font-bold text-gray-800 flex-grow">Select a Chat</h3>
-                        <div id="call-controls" class="flex items-center space-x-2">
-                             <button id="start-call-btn" onclick="startCallSimulation()" class="bg-green-100 text-green-600 hover:bg-green-200 p-2 rounded-full hidden transition duration-150" title="Start Video Call">
-                                <i data-lucide="video" class="w-5 h-5"></i>
+                    const header = document.getElementById('chat-room-header');
+                    if (header) {
+                         header.innerHTML = `
+                            <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
+                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
                             </button>
-                            <button id="end-call-btn" onclick="endCallSimulation()" class="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full hidden transition duration-150" title="End Call">
-                                <i data-lucide="phone-off" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    `;
-                    document.getElementById('chat-input-area').classList.add('hidden');
+                            <h3 id="chat-room-title" class="text-lg font-bold text-gray-800 flex-grow">Select a Chat</h3>
+                            <div id="call-controls" class="flex items-center space-x-2">
+                                 <button id="start-call-btn" onclick="startCallSimulation()" class="bg-green-100 text-green-600 hover:bg-green-200 p-2 rounded-full hidden transition duration-150" title="Start Video Call">
+                                    <i data-lucide="video" class="w-5 h-5"></i>
+                                </button>
+                                <button id="end-call-btn" onclick="endCallSimulation()" class="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full hidden transition duration-150" title="End Call">
+                                    <i data-lucide="phone-off" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        `;
+                        // FIX: Run createIcons immediately after innerHTML to ensure DOM elements are fully established
+                        lucide.createIcons();
+                    }
+                    document.getElementById('chat-input-area')?.classList.add('hidden');
                     // Ensure chat list is visible on mobile when no chat is selected
                     const chatList = document.getElementById('chat-list');
                     const chatRoomContainer = document.getElementById('chat-room-container');
@@ -555,6 +563,9 @@
             } else if (viewName === 'highlights') { 
                 listenToHighlights();
             }
+            
+            // Re-render lucide icons AFTER potential innerHTML replacements
+            lucide.createIcons();
         };
 
         // --- Firebase Core Setup ---
@@ -967,8 +978,16 @@
                  dmListContainer.innerHTML = '<div class="text-xs text-gray-500 text-center py-2">No other players found.</div>';
             } else {
                 allUsers.forEach(user => {
+                    const dmChatId = getDmChatId(user.id); // Calculate DM ID
                     const userElement = document.createElement('div');
+                    userElement.id = `chat-item-${dmChatId}`; // Assign ID for selection
                     userElement.className = 'p-3 hover:bg-slate-100 rounded-lg cursor-pointer transition duration-150 border border-slate-200';
+                    
+                    // Apply active style if this is the currently open chat
+                    if (currentChatId === dmChatId) {
+                         userElement.classList.add('active-chat-item');
+                    }
+                    
                     userElement.innerHTML = `
                         <p class="font-semibold text-gray-900">${user.name}</p>
                         <p class="text-xs text-gray-500 truncate">${user.position} | ${user.club}</p>
@@ -991,7 +1010,8 @@
             if (!db || !currentUserId) return;
 
             const dmChatId = getDmChatId(targetUserId);
-            const chatName = targetUserName; // Use target user's name for DM title
+            // The chatName is the person's user name, as requested.
+            const chatName = targetUserName; 
             
             // Check if DM chat room exists, if not, create it (no message needed, just the document)
             const chatDocRef = doc(db, CHATS_COLLECTION_PATH, dmChatId);
@@ -1038,6 +1058,8 @@
                 document.getElementById('chat-input-area')?.classList.add('hidden');
                 document.getElementById('chat-placeholder')?.classList.remove('hidden');
             }
+            // Clear active chat highlighting on close
+            document.querySelectorAll('.active-chat-item').forEach(el => el.classList.remove('active-chat-item'));
         };
 
         /** Ensures the public chat room exists for all users to join. */
@@ -1079,26 +1101,40 @@
             currentChatId = chatId;
             currentChatName = chatName;
 
-            const chatList = document.getElementById('chat-list');
-            const chatRoomContainer = document.getElementById('chat-room-container');
-            const chatTitle = document.getElementById('chat-room-title');
-            const inputArea = document.getElementById('chat-input-area');
-            const inputField = document.getElementById('chat-message-input');
-            const placeholder = document.getElementById('chat-placeholder');
-            const backButton = document.getElementById('chat-back-button');
-            const startCallBtn = document.getElementById('start-call-btn');
-            const endCallBtn = document.getElementById('end-call-btn');
-            const callControls = document.getElementById('call-controls');
+            // Collect and check all necessary elements. (FIX: Use a robust loop to log missing IDs)
+            const elementIds = [
+                'chat-list', 'chat-room-container', 'chat-room-title', 
+                'chat-input-area', 'chat-message-input', 'chat-placeholder', 
+                'chat-back-button', 'start-call-btn', 'end-call-btn', 'call-controls'
+            ];
 
-            // --- FIX: Add null checks for elements (addressing the TypeError) ---
-            if (!chatList || !chatRoomContainer || !chatTitle || !inputArea || !inputField || !placeholder || !backButton || !startCallBtn || !endCallBtn || !callControls) {
-                 console.error("Chat UI elements not fully loaded. Cannot open chat.");
-                 return; 
+            const elements = {};
+            for (const id of elementIds) {
+                const element = document.getElementById(id);
+                elements[id] = element;
+                if (element === null) {
+                     console.error(`CRITICAL CHAT ERROR: Element ID "${id}" is missing.`);
+                     return; 
+                }
             }
-            // --- END FIX ---
+
+            // Destructure elements from the collected object
+            const { chatList, chatRoomContainer, chatTitle, inputArea, inputField, placeholder, backButton, startCallBtn, endCallBtn, callControls } = elements;
+            
 
             // Determine if it's a DM (not global)
             const isDM = chatId !== 'global_team_chat';
+
+            // --- Highlight the active chat item ---
+            document.querySelectorAll('.active-chat-item').forEach(el => el.classList.remove('active-chat-item'));
+            
+            // Highlight the selected item in the list
+            const activeItem = document.getElementById(isDM ? `chat-item-${chatId}` : 'global-chat-room');
+            if (activeItem) {
+                activeItem.classList.add('active-chat-item');
+            }
+            // --- End Highlight Logic ---
+
 
             // Mobile UI Toggle (Hide list, show room)
             if (window.innerWidth < 768) { 
@@ -1108,7 +1144,7 @@
             }
 
             // Update UI
-            chatTitle.textContent = chatName;
+            chatTitle.textContent = chatName; // This is where the DM's person's name is set
             
             inputArea.classList.remove('hidden');
             inputField.focus();
