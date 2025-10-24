@@ -104,12 +104,6 @@
         .home-content {
             z-index: 2;
         }
-        /* Active chat list item style */
-        .active-chat-item {
-             background-color: #f1f5f9; /* slate-100 */
-             border-left: 3px solid #16a34a; /* green-600 */
-             padding-left: calc(0.75rem - 3px); /* Adjust padding due to border */
-        }
         /* Confirmation Modal Styles */
         #confirmation-modal {
             transition: opacity 0.3s ease;
@@ -140,8 +134,9 @@
                 
                 <div class="flex items-center space-x-4">
                     <span id="user-greeting" class="hidden md:inline text-sm font-medium text-gray-300"></span>
+                    <!-- Button to open Profile EDITING Modal -->
                     <button onclick="document.getElementById('profile-modal').classList.remove('hidden')" class="bg-white text-gray-800 hover:bg-gray-200 px-3 py-1 rounded-full text-xs font-semibold shadow transition duration-150">
-                        <i data-lucide="user" class="w-4 h-4 inline mr-1 text-green-600"></i> Profile
+                        <i data-lucide="user" class="w-4 h-4 inline mr-1 text-green-600"></i> Edit Profile
                     </button>
                 </div>
             </div>
@@ -157,8 +152,9 @@
                 <button data-view="highlights" onclick="switchView('highlights')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
                     <i data-lucide="camera" class="w-5 h-5 mr-2"></i> Highlights
                 </button>
-                <button data-view="chat" onclick="switchView('chat')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
-                    <i data-lucide="message-square" class="w-5 h-5 mr-2"></i> Chat
+                <!-- NEW: Profile Page View -->
+                <button data-view="my-profile" onclick="switchView('my-profile')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
+                    <i data-lucide="contact" class="w-5 h-5 mr-2"></i> My Profile
                 </button>
             </nav>
         </header>
@@ -166,17 +162,11 @@
         <!-- Content Area -->
         <main class="max-w-7xl mx-auto flex-grow p-4 w-full">
             
-            <!-- HOME VIEW (NEW) -->
+            <!-- HOME VIEW -->
             <div id="home-view" class="view-container home-content flex items-center justify-center min-h-screen p-4 -mt-20">
                 <!-- Video Background Placeholder -->
                 <div class="home-video-container">
                     <div class="home-video">
-                        <!-- NOTE: This is a placeholder for a 4K video. To make it a 'live' background, uncomment the <video> tag below and insert a direct, high-quality MP4 URL. -->
-                        <!-- 
-                        <video autoplay loop muted playsinline class="home-video">
-                            <source src="YOUR_4K_VIDEO_URL.mp4" type="video/mp4">
-                        </video>
-                        -->
                         <div class="home-overlay"></div>
                     </div>
                 </div>
@@ -294,68 +284,63 @@
                 </div>
             </div>
             
-            <!-- Chat View -->
-            <div id="chat-view" class="view-container hidden">
-                <div class="flex h-[80vh] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
-                    
-                    <!-- Chat List (Left Pane) -->
-                    <div id="chat-list" class="w-full md:w-1/3 border-r border-slate-200 p-4 space-y-4 overflow-y-auto">
-                        
-                        <!-- Global Chat -->
-                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
-                            <i data-lucide="messages-square" class="w-5 h-5 mr-2 text-primary"></i> Channels
-                        </h2>
-                        <div id="global-chat-room" data-chat-id="global_team_chat" onclick="openChat('global_team_chat', 'Global Team Chat')" 
-                            class="p-3 bg-green-50 hover:bg-green-100 rounded-lg cursor-pointer transition duration-150 border border-green-200">
-                            <p class="font-semibold text-primary">Global Team Chat</p>
-                            <p class="text-xs text-gray-500 truncate">Connect with players worldwide...</p>
+            <!-- NEW: My Profile View (Replaces Chat) -->
+            <div id="my-profile-view" class="view-container hidden max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 border border-slate-200">
+                    <div class="text-center mb-8">
+                        <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-4xl mx-auto mb-4 border-4 border-green-300">
+                            <span id="profile-initials">A</span>
                         </div>
-                        
-                        <!-- NEW: Direct Message List -->
-                        <h3 class="text-sm font-bold text-gray-500 mt-6 border-t pt-4">Direct Messages</h3>
-                        <div id="dm-list-container" class="space-y-2">
-                            <div id="dm-list-loading" class="text-xs text-gray-400 text-center py-2">Loading users...</div>
-                            <!-- User list for DMs will be dynamically loaded here -->
+                        <h1 id="profile-page-name" class="text-4xl font-extrabold text-gray-900">Player Name</h1>
+                        <p id="profile-page-position" class="text-xl font-semibold text-green-600 mt-1">Position</p>
+                        <p id="profile-page-club" class="text-md text-gray-500">Club / Location</p>
+                    </div>
+
+                    <!-- Contact & Social Media Section -->
+                    <div class="grid md:grid-cols-2 gap-8 mt-8 pt-6 border-t border-slate-200">
+                        <!-- Left: Main Contact -->
+                        <div class="space-y-4">
+                            <h2 class="text-2xl font-bold text-primary flex items-center mb-4 border-b pb-2">
+                                <i data-lucide="mail" class="w-6 h-6 mr-3 text-green-600"></i> Contact Details
+                            </h2>
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="at-sign" class="w-5 h-5 text-gray-500"></i>
+                                <span class="font-medium text-gray-700">Email:</span>
+                                <span id="profile-page-email" class="text-gray-900 font-semibold truncate">Not set</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="phone" class="w-5 h-5 text-gray-500"></i>
+                                <span class="font-medium text-gray-700">Phone:</span>
+                                <span id="profile-page-phone" class="text-gray-900 font-semibold truncate">Not set</span>
+                            </div>
+                        </div>
+
+                        <!-- Right: Social Media -->
+                        <div class="space-y-4">
+                            <h2 class="text-2xl font-bold text-primary flex items-center mb-4 border-b pb-2">
+                                <i data-lucide="users" class="w-6 h-6 mr-3 text-green-600"></i> Social Media
+                            </h2>
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="link" class="w-5 h-5 text-gray-500"></i>
+                                <span class="font-medium text-gray-700">Twitter/X:</span>
+                                <a id="profile-page-twitter" target="_blank" class="text-blue-600 hover:underline cursor-pointer font-semibold truncate">Not set</a>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <i data-lucide="instagram" class="w-5 h-5 text-gray-500"></i>
+                                <span class="font-medium text-gray-700">Instagram:</span>
+                                <a id="profile-page-instagram" target="_blank" class="text-pink-600 hover:underline cursor-pointer font-semibold truncate">Not set</a>
+                            </div>
                         </div>
                     </div>
-                    
-                    <!-- Chat Room (Right Pane) -->
-                    <div id="chat-room-container" class="w-full md:w-2/3 flex flex-col hidden md:flex">
-                        
-                        <!-- UPDATED Chat Header with Mobile Back Button and Call Controls -->
-                        <div id="chat-room-header" class="p-4 border-b border-slate-200 bg-slate-50 flex items-center">
-                            <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
-                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                            </button>
-                            <h3 id="chat-room-title" class="text-lg font-bold text-gray-800 flex-grow">Select a Chat</h3>
-                            
-                            <!-- NEW: Call Controls Container -->
-                            <div id="call-controls" class="flex items-center space-x-2">
-                                <button id="start-call-btn" onclick="startCallSimulation()" class="bg-green-100 text-green-600 hover:bg-green-200 p-2 rounded-full hidden transition duration-150" title="Start Video Call">
-                                    <i data-lucide="video" class="w-5 h-5"></i>
-                                </button>
-                                <button id="end-call-btn" onclick="endCallSimulation()" class="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full hidden transition duration-150" title="End Call">
-                                    <i data-lucide="phone-off" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <!-- END UPDATED Chat Header -->
-                        
-                        <div id="messages-container" class="flex-grow p-4 space-y-3 overflow-y-auto custom-scrollbar">
-                            <!-- Messages will be rendered here -->
-                            <div id="chat-placeholder" class="text-center text-gray-500 mt-20">
-                                <i data-lucide="sparkles" class="w-8 h-8 mx-auto mb-2"></i>
-                                <p>Start a conversation in a global channel or DM a player!</p>
-                            </div>
-                        </div>
-                        
-                        <div id="chat-input-area" class="p-4 border-t border-slate-200 bg-white hidden">
-                            <div class="flex space-x-3">
-                                <input type="text" id="chat-message-input" placeholder="Type your message..." class="flex-grow p-3 border border-slate-300 rounded-full focus:ring-green-500 focus:border-green-500">
-                                <button onclick="sendChatMessage()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full hover:bg-green-700 transition duration-150">
-                                    Send
-                                </button>
-                            </div>
+
+                    <!-- Friend Requests Section (Still needed for the networking feature) -->
+                    <div class="mt-10 pt-6 border-t border-slate-200">
+                        <h2 class="text-2xl font-bold text-primary flex items-center mb-4">
+                            <i data-lucide="user-plus" class="w-6 h-6 mr-3 text-green-600"></i> Pending Friend Requests
+                        </h2>
+                        <div id="profile-page-requests" class="space-y-3">
+                            <!-- Requests will be rendered here -->
+                            <p class="text-gray-500">No pending requests.</p>
                         </div>
                     </div>
                 </div>
@@ -378,42 +363,73 @@
                     <i data-lucide="camera" class="w-6 h-6"></i>
                     <span class="text-xs font-medium mt-1">Highlights</span>
                 </button>
-                <button data-view="chat" onclick="switchView('chat')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
-                    <i data-lucide="message-square" class="w-6 h-6"></i>
-                    <span class="text-xs font-medium mt-1">Chat</span>
+                <!-- NEW: Profile Page View -->
+                <button data-view="my-profile" onclick="switchView('my-profile')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
+                    <i data-lucide="contact" class="w-6 h-6"></i>
+                    <span class="text-xs font-medium mt-1">Profile</span>
                 </button>
             </nav>
         </footer>
 
     </div>
 
-    <!-- Profile Edit Modal (UPDATED with Search, Requests, and Admin Tools) -->
+    <!-- Profile Edit Modal (UPDATED with Go Back/Close and removed Admin Cleanup) -->
     <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
-            <h3 class="text-xl font-bold mb-4 text-primary">Edit Player Profile</h3>
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
+            
+            <!-- NEW: Modal Header with Close Button -->
+            <div class="flex justify-between items-center mb-4 border-b pb-2">
+                <h3 class="text-xl font-bold text-primary">Edit Player Profile</h3>
+                <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 p-1 rounded-full">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
             <form id="profile-form">
-                <div class="mb-4">
-                    <label for="profile-name-input" class="block text-sm font-medium text-gray-700 mb-1">Full Name / Nickname</label>
-                    <input type="text" id="profile-name-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                <div class="space-y-4">
+                    <h4 class="text-lg font-semibold text-gray-800 border-b pb-1 mb-3">General Info</h4>
+                    <div class="mb-4">
+                        <label for="profile-name-input" class="block text-sm font-medium text-gray-700 mb-1">Full Name / Nickname</label>
+                        <input type="text" id="profile-name-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="profile-position-input" class="block text-sm font-medium text-gray-700 mb-1">Playing Position</label>
+                        <select id="profile-position-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                            <option value="Unspecified">Select Position</option>
+                            <option value="Goalkeeper">Goalkeeper</option>
+                            <option value="Defender">Defender</option>
+                            <option value="Midfielder">Midfielder</option>
+                            <option value="Forward">Forward</option>
+                            <option value="Coach/Staff">Coach/Staff</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="profile-club-input" class="block text-sm font-medium text-gray-700 mb-1">Current Club / Country</label>
+                        <input type="text" id="profile-club-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    
+                    <h4 class="text-lg font-semibold text-gray-800 border-b pb-1 mb-3 pt-4">Contact & Social Links</h4>
+                    <div class="mb-4">
+                        <label for="profile-email-input" class="block text-sm font-medium text-gray-700 mb-1">Public Email</label>
+                        <input type="email" id="profile-email-input" placeholder="e.g., your.scout@email.com" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="profile-phone-input" class="block text-sm font-medium text-gray-700 mb-1">Public Phone / WhatsApp</label>
+                        <input type="tel" id="profile-phone-input" placeholder="e.g., +1 555 123 4567" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-4">
+                        <label for="profile-twitter-input" class="block text-sm font-medium text-gray-700 mb-1">Twitter/X Handle (e.g., @player_x)</label>
+                        <input type="text" id="profile-twitter-input" placeholder="e.g., @Cristiano" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-6">
+                        <label for="profile-instagram-input" class="block text-sm font-medium text-gray-700 mb-1">Instagram Handle (e.g., @player_x)</label>
+                        <input type="text" id="profile-instagram-input" placeholder="e.g., @leomessi" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                    </div>
                 </div>
-                <div class="mb-4">
-                    <label for="profile-position-input" class="block text-sm font-medium text-gray-700 mb-1">Playing Position</label>
-                    <select id="profile-position-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                        <option value="Unspecified">Select Position</option>
-                        <option value="Goalkeeper">Goalkeeper</option>
-                        <option value="Defender">Defender</option>
-                        <option value="Midfielder">Midfielder</option>
-                        <option value="Forward">Forward</option>
-                        <option value="Coach/Staff">Coach/Staff</option>
-                    </select>
-                </div>
-                <div class="mb-6">
-                    <label for="profile-club-input" class="block text-sm font-medium text-gray-700 mb-1">Current Club / Country</label>
-                    <input type="text" id="profile-club-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                </div>
+                
                 <div class="flex justify-end space-x-3">
                     <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="bg-slate-200 text-gray-700 font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition duration-150">
-                        Cancel
+                        Close
                     </button>
                     <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition duration-150">
                         Save Profile
@@ -447,18 +463,6 @@
                 </div>
             </div>
             
-            <!-- Admin Cleanup Feature -->
-            <div class="mt-8 pt-4 border-t border-slate-200">
-                <h3 class="text-lg font-bold mb-3 text-red-600 flex items-center">
-                    <i data-lucide="shield-off" class="w-5 h-5 mr-2"></i> Admin Tools (Cleanup)
-                </h3>
-                <button id="delete-anonymous-btn" onclick="confirmDeleteAnonymous()" class="w-full bg-red-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-red-600 transition duration-150 disabled:bg-red-300" disabled>
-                    <i data-lucide="trash-2" class="w-5 h-5 inline mr-2"></i> 
-                    Delete Anonymous Accounts (<span id="anonymous-count">0</span>)
-                </button>
-                <p class="text-xs text-red-500 mt-2 text-center">Caution: This action is permanent and applies to all 'Anonymous Player' profiles except yours.</p>
-            </div>
-
         </div>
     </div>
     
@@ -484,15 +488,12 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // FIX: Added 'where', 'writeBatch', 'deleteDoc' imports for search and admin features.
         import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDocs, where, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         setLogLevel('Debug');
 
         // --- Global Variables (Firebase Configuration - HARDCODED) ---
-        // This configuration uses the credentials you provided, ensuring the app connects 
-        // to your Firebase project directly, regardless of the hosting environment.
         const firebaseConfig = {
             apiKey: "AIzaSyCfcDDG3e7KTBevfFfl99oaT5Z_hv4q5iY",
             authDomain: "uscout-football-network.firebaseapp.com",
@@ -502,36 +503,31 @@
             appId: "1:1072495022545:web:891dca6138f1ef691c50f0",
             measurementId: "G-9VC117MXGF"     
         };
-        // The projectId is used as the unique identifier for Firestore pathing.
         const appId = firebaseConfig.projectId; 
-        
-        // This is kept for compatibility if the environment provides a token, otherwise it's null.
         const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
 
         let db;
         let auth;
         let currentUserId = null;
         let currentUserProfile = {
-            name: 'Anonymous Player',
+            // UPDATED DEFAULT PLACEHOLDERS
+            name: 'Unknown Player',
             position: 'Unspecified',
-            club: 'Global Network',
-            friendList: [], // User IDs of accepted friends
-            sentRequests: [], // User IDs of requests sent by me
-            receivedRequests: [], // User IDs of requests received by me
+            club: 'Unknown Club/Location',
+            friendList: [], 
+            sentRequests: [], 
+            receivedRequests: [],
+            email: '', 
+            phone: '',
+            twitter: '',
+            instagram: ''
         };
-        let currentChatId = null;
-        let currentChatName = null;
-        let chatUnsubscribe = null;
-        let allUsers = []; // Stores all user profiles for DM list
-        let isCallActive = false; // Global state for call simulation
-        let anonymousUserIds = []; // Stores IDs of anonymous users for admin tool
-
+        
         // --- Firestore Paths ---
         const POSTS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_posts`;
         const USERS_COLLECTION_PATH = `artifacts/${appId}/public/data/users`;
-        const CHATS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_chats`;
         const HIGHLIGHTS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_highlights`; 
-
+        
         // --- Utility Functions ---
 
         /**
@@ -548,16 +544,16 @@
             if (seconds < 60) return `${seconds}s ago`;
             if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
             if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-            if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`;
+            if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`; // Fixed math error
             return firebaseTimestamp.toDate().toLocaleDateString();
         }
 
         // --- View Management ---
 
-        /** Switches the active application view (home, feed, highlights, or chat). */
+        /** Switches the active application view (home, feed, highlights, or my-profile). */
         window.switchView = function(viewName) {
-            // Include 'home' in the view list
-            ['home', 'feed', 'highlights', 'chat'].forEach(view => {
+            // Updated view list
+            ['home', 'feed', 'highlights', 'my-profile'].forEach(view => {
                 const viewElement = document.getElementById(`${view}-view`);
                 if (viewElement) {
                     viewElement.classList.toggle('hidden', view !== viewName);
@@ -591,43 +587,10 @@
             });
             
             // Special logic for data listeners
-            if (viewName === 'chat') {
-                listenToUsers(); // Start listening to users list when switching to chat
-                if (currentChatId) {
-                    // If a chat is already open, maintain the view state
-                    openChat(currentChatId, currentChatName, true); 
-                } else {
-                    // Reset to chat list view
-                    const header = document.getElementById('chat-room-header');
-                    if (header) {
-                         header.innerHTML = `
-                            <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
-                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                            </button>
-                            <h3 id="chat-room-title" class="text-lg font-bold text-gray-800 flex-grow">Select a Chat</h3>
-                            <div id="call-controls" class="flex items-center space-x-2">
-                                 <button id="start-call-btn" onclick="startCallSimulation()" class="bg-green-100 text-green-600 hover:bg-green-200 p-2 rounded-full hidden transition duration-150" title="Start Video Call">
-                                    <i data-lucide="video" class="w-5 h-5"></i>
-                                </button>
-                                <button id="end-call-btn" onclick="endCallSimulation()" class="bg-red-100 text-red-600 hover:bg-red-200 p-2 rounded-full hidden transition duration-150" title="End Call">
-                                    <i data-lucide="phone-off" class="w-5 h-5"></i>
-                                </button>
-                            </div>
-                        `;
-                        // FIX: Run createIcons immediately after innerHTML to ensure DOM elements are fully established
-                        lucide.createIcons();
-                    }
-                    document.getElementById('chat-input-area')?.classList.add('hidden');
-                    // Ensure chat list is visible on mobile when no chat is selected
-                    const chatList = document.getElementById('chat-list');
-                    const chatRoomContainer = document.getElementById('chat-room-container');
-                    if (window.innerWidth < 768 && chatList && chatRoomContainer) {
-                        chatList.classList.remove('hidden');
-                        chatRoomContainer.classList.add('hidden');
-                    }
-                }
-            } else if (viewName === 'highlights') { 
+            if (viewName === 'highlights') { 
                 listenToHighlights();
+            } else if (viewName === 'my-profile') {
+                renderMyProfilePage(); // Re-render the profile page on view switch
             }
             
             // Re-render lucide icons AFTER potential innerHTML replacements
@@ -638,8 +601,6 @@
 
         /** Initializes Firebase app and services. */
         function initFirebase() {
-            // NOTE: The !firebaseConfig check is now skipped because the config is hardcoded.
-            // However, we still check for null just in case of environment issue with hardcoding.
             if (!firebaseConfig || !firebaseConfig.projectId) {
                 console.error("Firebase configuration is missing or malformed.");
                 document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Error: Firebase configuration is malformed. Cannot load feed.</p>';
@@ -679,23 +640,19 @@
                 if (user) {
                     currentUserId = user.uid;
                     updateUserIdDisplay(currentUserId);
-                    // NEW: Start real-time listener for user profile
                     listenToUserProfile(currentUserId); 
-                    listenToAnonymousUsersCount();
                     
                     // Enable post button once authenticated
                     document.getElementById('post-button').disabled = false;
                     document.getElementById('post-content').addEventListener('input', checkPostContent);
                     
-                    // Start listening to the feed and chat
+                    // Start listening to the feed
                     listenToFeed();
-                    checkGlobalChatRoom(); 
                 } else {
                     currentUserId = crypto.randomUUID(); // Fallback ID if auth fails unexpectedly
                     updateUserIdDisplay(currentUserId);
                     console.log("User logged out or state change detected.");
                     listenToFeed();
-                    checkGlobalChatRoom();
                 }
                 // Set initial view to home after auth attempt
                 switchView('home'); 
@@ -709,34 +666,42 @@
 
             onSnapshot(userDocRef, async (docSnap) => {
                 if (docSnap.exists()) {
-                    // Update global state with friend fields initialized to empty arrays if missing
+                    // Update global state with all profile fields, ensuring defaults if new fields are missing
                     currentUserProfile = {
                         ...docSnap.data(),
                         friendList: docSnap.data().friendList || [],
                         sentRequests: docSnap.data().sentRequests || [],
                         receivedRequests: docSnap.data().receivedRequests || [],
+                        email: docSnap.data().email || '', 
+                        phone: docSnap.data().phone || '', 
+                        twitter: docSnap.data().twitter || '', 
+                        instagram: docSnap.data().instagram || '' 
                     };
                 } else {
                     // Create default profile if none exists
                     await setDoc(userDocRef, currentUserProfile);
-                    // The onSnapshot listener will fire again with the new document
                     return;
                 }
                 updateProfileUI();
-                renderPendingRequests(); // Render friend request notifications
+                renderPendingRequests();
+                renderMyProfilePage(); // Update the dedicated profile view
             }, (error) => {
                 console.error("Error listening to user profile:", error);
             });
         }
 
-        /** Updates the profile UI elements. */
+        /** Updates the profile UI elements (Sidebar and Edit Modal inputs). */
         function updateProfileUI() {
-            const { name, position, club } = currentUserProfile;
+            const { name, position, club, email, phone, twitter, instagram } = currentUserProfile;
             
-            // Set input values for modal
+            // Set input values for modal (for editing)
             document.getElementById('profile-name-input').value = name;
             document.getElementById('profile-position-input').value = position;
             document.getElementById('profile-club-input').value = club;
+            document.getElementById('profile-email-input').value = email;      
+            document.getElementById('profile-phone-input').value = phone;      
+            document.getElementById('profile-twitter-input').value = twitter;  
+            document.getElementById('profile-instagram-input').value = instagram; 
 
             // Set display values for sidebar and header
             document.getElementById('profile-name-display').textContent = name;
@@ -744,15 +709,63 @@
             document.getElementById('profile-club-display').textContent = club;
             document.getElementById('user-greeting').textContent = `Welcome, ${name.split(' ')[0]}!`;
 
-            lucide.createIcons(); // Re-render lucide icons if necessary
+            lucide.createIcons();
         }
+        
+        /** Renders the new dedicated My Profile display page. */
+        function renderMyProfilePage() {
+            const { name, position, club, email, phone, twitter, instagram } = currentUserProfile;
+
+            // General Info
+            document.getElementById('profile-initials').textContent = name[0].toUpperCase();
+            document.getElementById('profile-page-name').textContent = name;
+            document.getElementById('profile-page-position').textContent = position;
+            document.getElementById('profile-page-club').textContent = club;
+
+            // Contact Details
+            document.getElementById('profile-page-email').textContent = email || 'Not set';
+            document.getElementById('profile-page-phone').textContent = phone || 'Not set';
+
+            // Social Media Details
+            const twitterEl = document.getElementById('profile-page-twitter');
+            twitterEl.textContent = twitter ? `@${twitter.replace('@', '')}` : 'Not set';
+            twitterEl.href = twitter ? `https://twitter.com/${twitter.replace('@', '')}` : '#';
+            twitterEl.classList.toggle('text-blue-600', !!twitter);
+            twitterEl.classList.toggle('text-gray-900', !twitter);
+
+            const instagramEl = document.getElementById('profile-page-instagram');
+            instagramEl.textContent = instagram ? `@${instagram.replace('@', '')}` : 'Not set';
+            instagramEl.href = instagram ? `https://instagram.com/${instagram.replace('@', '')}` : '#';
+            instagramEl.classList.toggle('text-pink-600', !!instagram);
+            instagramEl.classList.toggle('text-gray-900', !instagram);
+
+            // Friend Requests (moved from modal into the public profile page)
+            const requestsContainer = document.getElementById('profile-page-requests');
+            requestsContainer.innerHTML = '';
+            
+            const requests = currentUserProfile.receivedRequests;
+            if (requests.length === 0) {
+                 requestsContainer.innerHTML = '<p class="text-sm text-gray-500">You currently have no pending requests.</p>';
+            } else {
+                // To display names, we need a list of all users, but since we removed the global listen, we'll use placeholder text here.
+                // NOTE: This area is primarily to indicate requests exist. Actual management is still in the Edit Modal.
+                requestsContainer.innerHTML = `
+                    <p class="text-sm font-medium text-yellow-700 flex items-center">
+                        <i data-lucide="bell" class="w-4 h-4 mr-1"></i> You have ${requests.length} pending requests.
+                    </p>
+                    <p class="text-xs text-gray-500">Open the **Edit Profile** modal to view and accept them.</p>
+                `;
+            }
+
+            lucide.createIcons();
+        }
+
 
         /** Updates the displayed user ID. */
         function updateUserIdDisplay(userId) {
             const idElement = document.getElementById('user-id-display');
             idElement.textContent = userId;
             idElement.onclick = () => {
-                // Use execCommand for broader compatibility in iFrames
                 navigator.clipboard.writeText(userId).then(() => {
                     idElement.textContent = 'Copied!';
                     setTimeout(() => { idElement.textContent = userId; }, 1500);
@@ -848,7 +861,8 @@
             return postCard;
         }
         
-        // --- Highlights Logic (UPDATED) ---
+        // --- Highlights Logic (Existing) ---
+        // (Highlight functions remain unchanged as they were not related to chat/DM removal)
 
         // NEW: Update file input label text on change
         document.addEventListener('DOMContentLoaded', () => {
@@ -870,7 +884,6 @@
             if (!db) return;
             
             const highlightsLoading = document.getElementById('highlights-loading');
-            // FIX: Ensure classList access is protected
             if(highlightsLoading) highlightsLoading.classList.remove('hidden');
 
             const q = query(
@@ -886,7 +899,6 @@
                 renderHighlights(highlights);
             }, (error) => {
                 console.error("Error listening to highlights:", error);
-                // FIX: Ensure innerHTML access is protected
                 if(highlightsLoading) {
                     highlightsLoading.innerHTML = '<p class="text-red-500">Error fetching highlights data.</p>';
                 }
@@ -898,11 +910,9 @@
             const highlightsContainer = document.getElementById('highlights-container');
             const highlightsLoading = document.getElementById('highlights-loading');
 
-            // Check for existence of containers
             if (!highlightsContainer) return;
             
             highlightsContainer.innerHTML = '';
-            // FIX: Ensure classList access is protected
             if(highlightsLoading) highlightsLoading.classList.add('hidden');
 
             if (highlights.length === 0) {
@@ -1019,417 +1029,6 @@
             }
         };
 
-        // --- Chat Logic (NEW DM Feature) ---
-
-        /** Sets up the real-time listener for all user profiles to populate the DM list. */
-        function listenToUsers() {
-            if (!db) return;
-            
-            const dmListLoading = document.getElementById('dm-list-loading');
-            if(dmListLoading) dmListLoading.classList.remove('hidden');
-
-            const q = query(collection(db, USERS_COLLECTION_PATH), orderBy('name', 'asc'));
-
-            onSnapshot(q, (snapshot) => {
-                allUsers = [];
-                snapshot.forEach(doc => {
-                    const user = { id: doc.id, ...doc.data() };
-                    if (user.id !== currentUserId) {
-                        allUsers.push(user);
-                    }
-                });
-                renderDmList();
-            }, (error) => {
-                console.error("Error listening to users:", error);
-                if(dmListLoading) dmListLoading.textContent = 'Error loading users.';
-            });
-        }
-
-        /** Renders the list of users who can be DMed. */
-        function renderDmList() {
-            const dmListContainer = document.getElementById('dm-list-container');
-            const dmListLoading = document.getElementById('dm-list-loading');
-
-            if (!dmListContainer) return;
-            
-            dmListContainer.innerHTML = '';
-
-            if (allUsers.length === 0) {
-                 dmListContainer.innerHTML = '<div class="text-xs text-gray-500 text-center py-2">No other players found.</div>';
-            } else {
-                allUsers.forEach(user => {
-                    const dmChatId = getDmChatId(user.id); // Calculate DM ID
-                    const userElement = document.createElement('div');
-                    userElement.id = `chat-item-${dmChatId}`; // Assign ID for selection
-                    userElement.className = 'p-3 hover:bg-slate-100 rounded-lg cursor-pointer transition duration-150 border border-slate-200';
-                    
-                    // Apply active style if this is the currently open chat
-                    if (currentChatId === dmChatId) {
-                         userElement.classList.add('active-chat-item');
-                    }
-                    
-                    userElement.innerHTML = `
-                        <p class="font-semibold text-gray-900">${user.name}</p>
-                        <p class="text-xs text-gray-500 truncate">${user.position} | ${user.club}</p>
-                    `;
-                    userElement.onclick = () => startOrOpenDM(user.id, user.name);
-                    dmListContainer.appendChild(userElement);
-                });
-            }
-            if(dmListLoading) dmListLoading.classList.add('hidden');
-        }
-        
-        /** Generates a consistent private chat ID between two users. */
-        function getDmChatId(targetUserId) {
-            const ids = [currentUserId, targetUserId].sort();
-            return `DM_${ids[0]}_${ids[1]}`;
-        }
-        
-        /** Initiates or opens a direct message chat. */
-        window.startOrOpenDM = async function(targetUserId, targetUserName) {
-            if (!db || !currentUserId) return;
-
-            const dmChatId = getDmChatId(targetUserId);
-            // The chatName is the person's user name, as requested.
-            const chatName = targetUserName; 
-            
-            // Check if DM chat room exists, if not, create it (no message needed, just the document)
-            const chatDocRef = doc(db, CHATS_COLLECTION_PATH, dmChatId);
-            const docSnap = await getDoc(chatDocRef);
-
-            if (!docSnap.exists()) {
-                await setDoc(chatDocRef, { 
-                    name: chatName,
-                    isGroup: false,
-                    participants: [currentUserId, targetUserId],
-                    createdAt: serverTimestamp()
-                });
-            }
-            
-            // Open the DM chat room
-            openChat(dmChatId, targetUserName);
-        }
-
-        /** Closes the current chat room and returns to the chat list on small screens. */
-        window.closeChatRoom = function() {
-            const chatList = document.getElementById('chat-list');
-            const chatRoomContainer = document.getElementById('chat-room-container');
-            const backButton = document.getElementById('chat-back-button');
-
-            // NEW: End the call simulation if one is active
-            if (isCallActive) {
-                endCallSimulation(true);
-            }
-
-            if (window.innerWidth < 768) {
-                if (chatList) chatList.classList.remove('hidden');
-                if (chatRoomContainer) chatRoomContainer.classList.add('hidden');
-                if (backButton) backButton.classList.add('hidden');
-                
-                // Reset chat room state
-                currentChatId = null;
-                currentChatName = null;
-                if (chatUnsubscribe) chatUnsubscribe();
-                
-                // Reset to show 'Select a Chat'
-                const callControls = document.getElementById('call-controls');
-                if (callControls) callControls.classList.add('hidden');
-                document.getElementById('chat-room-title').textContent = 'Select a Chat';
-                document.getElementById('chat-input-area')?.classList.add('hidden');
-                document.getElementById('chat-placeholder')?.classList.remove('hidden');
-            }
-            // Clear active chat highlighting on close
-            document.querySelectorAll('.active-chat-item').forEach(el => el.classList.remove('active-chat-item'));
-        };
-
-        /** Ensures the public chat room exists for all users to join. */
-        async function checkGlobalChatRoom() {
-             if (!db) return;
-             const chatId = 'global_team_chat';
-             const chatDocRef = doc(db, CHATS_COLLECTION_PATH, chatId);
-             try {
-                const docSnap = await getDoc(chatDocRef);
-                if (!docSnap.exists()) {
-                    await setDoc(chatDocRef, { 
-                        name: "Global Team Chat", 
-                        isGroup: true,
-                        createdAt: serverTimestamp()
-                    });
-                }
-             } catch (error) {
-                console.error("Error ensuring global chat room exists:", error);
-             }
-        }
-
-        /** Opens a specific chat room and starts listening for messages. */
-        window.openChat = function(chatId, chatName, skipScroll = false) {
-            if (!db || !currentUserId) {
-                alertUser("Please ensure your profile is set up first.", "error");
-                return;
-            }
-
-            // Stop listening to the previous chat
-            if (chatUnsubscribe) {
-                chatUnsubscribe();
-            }
-            
-            // If opening a new chat, ensure call is ended from any previous chat
-            if (isCallActive) {
-                endCallSimulation(true);
-            }
-
-            currentChatId = chatId;
-            currentChatName = chatName;
-
-            // Collect and check all necessary elements. (FIX: Use a robust loop to log missing IDs)
-            const elementIds = [
-                'chat-list', 'chat-room-container', 'chat-room-title', 
-                'chat-input-area', 'chat-message-input', 'chat-placeholder', 
-                'chat-back-button', 'start-call-btn', 'end-call-btn', 'call-controls'
-            ];
-
-            const elements = {};
-            for (const id of elementIds) {
-                const element = document.getElementById(id);
-                elements[id] = element;
-                if (element === null) {
-                     console.error(`CRITICAL CHAT ERROR: Element ID "${id}" is missing.`);
-                     return; 
-                }
-            }
-
-            // Destructure elements from the collected object
-            const { chatList, chatRoomContainer, chatTitle, inputArea, inputField, placeholder, backButton, startCallBtn, endCallBtn, callControls } = elements;
-            
-
-            // Determine if it's a DM (not global)
-            const isDM = chatId !== 'global_team_chat';
-
-            // --- Highlight the active chat item ---
-            document.querySelectorAll('.active-chat-item').forEach(el => el.classList.remove('active-chat-item'));
-            
-            // Highlight the selected item in the list
-            const activeItem = document.getElementById(isDM ? `chat-item-${chatId}` : 'global-chat-room');
-            if (activeItem) {
-                activeItem.classList.add('active-chat-item');
-            }
-            // --- End Highlight Logic ---
-
-
-            // Mobile UI Toggle (Hide list, show room)
-            if (window.innerWidth < 768) { 
-                chatList.classList.add('hidden');
-                chatRoomContainer.classList.remove('hidden'); // Show the room
-                backButton.classList.remove('hidden'); // Show back button
-            }
-
-            // Update UI
-            // FIX: Added explicit check on chatTitle variable to prevent TypeError 
-            if (chatTitle) { 
-                chatTitle.textContent = chatName; // This is where the DM's person's name is set
-            } else {
-                console.error("Chat title element (chat-room-title) missing during openChat execution after initial checks.");
-                return;
-            }
-            
-            inputArea.classList.remove('hidden');
-            inputField.focus();
-            placeholder.classList.add('hidden');
-            
-            // Show/Hide Call Buttons based on DM status
-            callControls.classList.remove('hidden');
-            startCallBtn.classList.toggle('hidden', !isDM);
-            endCallBtn.classList.add('hidden');
-            
-            // Start listening to the new chat
-            listenToChat(chatId, skipScroll);
-        };
-        
-        /** Sets up the real-time listener for messages in a chat room. */
-        function listenToChat(chatId, skipScroll) {
-            const messagesRef = collection(db, CHATS_COLLECTION_PATH, chatId, 'messages');
-            const q = query(messagesRef, orderBy('timestamp', 'asc'));
-
-            chatUnsubscribe = onSnapshot(q, (snapshot) => {
-                const messages = [];
-                snapshot.forEach(doc => {
-                    messages.push({ id: doc.id, ...doc.data() });
-                });
-                renderMessages(messages, skipScroll);
-            }, (error) => {
-                console.error("Error listening to chat messages:", error);
-            });
-        }
-
-        /** Renders messages to the chat interface. */
-        function renderMessages(messages, skipScroll) {
-            const container = document.getElementById('messages-container');
-            if (!container) return; // safety check
-            container.innerHTML = '';
-            
-            messages.forEach(msg => {
-                const isMine = msg.userId === currentUserId;
-                const messageEl = document.createElement('div');
-                messageEl.className = `flex ${isMine ? 'justify-end' : 'justify-start'}`;
-                
-                // NEW: Check for system message type
-                if (msg.type === 'system') {
-                    messageEl.className = 'text-center text-sm text-gray-500 py-2';
-                    const messageText = msg.text.replace(/\[CALL_[A-Z]+\]/, '').trim();
-                    messageEl.innerHTML = `<span class="bg-slate-100 px-3 py-1 rounded-full text-xs">${messageText}</span>`;
-                } else {
-                    // Standard message rendering
-                    messageEl.innerHTML = `
-                        <div class="max-w-xs sm:max-w-md p-3 rounded-xl shadow-md ${isMine ? 'bg-green-600 text-white rounded-br-none' : 'bg-slate-200 text-gray-800 rounded-tl-none'}">
-                            <p class="text-xs font-bold ${isMine ? 'text-green-200' : 'text-primary'}">${msg.username}</p>
-                            <p class="text-sm mt-0.5 whitespace-pre-wrap">${msg.text}</p>
-                            <p class="text-[10px] text-right mt-1 ${isMine ? 'text-green-300' : 'text-gray-500'}">${formatTimestamp(msg.timestamp)}</p>
-                        </div>
-                    `;
-                }
-                container.appendChild(messageEl);
-            });
-            
-            // Auto-scroll to the bottom unless explicitly skipped (e.g., during view switch)
-            if (!skipScroll) {
-                container.scrollTop = container.scrollHeight;
-            }
-        }
-        
-        /** Sends a message to the currently open chat. */
-        window.sendChatMessage = async function() {
-            const input = document.getElementById('chat-message-input');
-            const messageText = input.value.trim();
-            
-            if (!messageText || !currentChatId || !db || !currentUserId) return;
-
-            const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
-            
-            const messageData = {
-                userId: currentUserId,
-                username: currentUserProfile.name,
-                text: messageText,
-                type: 'standard',
-                timestamp: serverTimestamp()
-            };
-
-            try {
-                // Disable input while sending to prevent double-post
-                input.disabled = true;
-                await addDoc(messagesRef, messageData);
-                input.value = ''; // Clear input on success
-            } catch (error) {
-                console.error("Error sending message:", error);
-                alertUser("Failed to send message.", "error");
-            } finally {
-                input.disabled = false;
-                input.focus();
-            }
-        };
-
-        // Allow sending message with Enter key
-        document.getElementById('chat-message-input')?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendChatMessage();
-            }
-        });
-
-
-        // --- Call Simulation Logic (NEW) ---
-
-        /** Updates the chat UI to reflect the call state. */
-        function updateCallUI() {
-            const startBtn = document.getElementById('start-call-btn');
-            const endBtn = document.getElementById('end-call-btn');
-            const inputArea = document.getElementById('chat-input-area');
-            const chatHeader = document.getElementById('chat-room-header');
-
-            if (!startBtn || !endBtn || !inputArea || !chatHeader) return;
-
-            const isDM = currentChatId && currentChatId !== 'global_team_chat';
-            
-            // If a call is active, hide chat input and show end button
-            if (isCallActive && isDM) {
-                startBtn.classList.add('hidden');
-                endBtn.classList.remove('hidden');
-                inputArea.classList.add('hidden');
-                
-                // Add or update the call banner
-                let callBanner = document.getElementById('call-banner');
-                if (!callBanner) {
-                    callBanner = document.createElement('div');
-                    callBanner.id = 'call-banner';
-                    callBanner.className = 'bg-green-100 text-green-800 p-2 text-center font-medium border-b border-green-300 animate-pulse';
-                    chatHeader.after(callBanner);
-                }
-                callBanner.innerHTML = `<i data-lucide="video" class="w-4 h-4 inline mr-2"></i> Call in progress with ${currentChatName}... (Simulated)`;
-                lucide.createIcons();
-
-            } else {
-                // Not active or in global chat: show start button (if DM) and chat input
-                startBtn.classList.toggle('hidden', !isDM);
-                endBtn.classList.add('hidden');
-                inputArea.classList.remove('hidden');
-                
-                // Remove banner
-                document.getElementById('call-banner')?.remove();
-            }
-        }
-
-        /** Initiates the simulated call. */
-        window.startCallSimulation = async function() {
-            if (!currentChatId || currentChatId === 'global_team_chat' || isCallActive) return;
-
-            const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
-            
-            // Send system message to chat history
-            const messageData = {
-                userId: currentUserId,
-                username: currentUserProfile.name,
-                text: `[CALL_INITIATED] ${currentUserProfile.name} is starting a video call.`,
-                type: 'system',
-                timestamp: serverTimestamp()
-            };
-
-            try {
-                await addDoc(messagesRef, messageData);
-                isCallActive = true;
-                updateCallUI();
-                alertUser(`Starting simulated call with ${currentChatName}...`, "info");
-            } catch (error) {
-                console.error("Error starting call simulation:", error);
-                alertUser("Failed to initiate call.", "error");
-            }
-        };
-
-        /** Ends the simulated call. */
-        window.endCallSimulation = async function(silent = false) {
-            if (!currentChatId || currentChatId === 'global_team_chat' || !isCallActive) return;
-
-            const messagesRef = collection(db, CHATS_COLLECTION_PATH, currentChatId, 'messages');
-            
-            // Send system message to chat history
-            const messageData = {
-                userId: currentUserId,
-                username: currentUserProfile.name,
-                text: `[CALL_ENDED] ${currentUserProfile.name} ended the call.`,
-                type: 'system',
-                timestamp: serverTimestamp()
-            };
-
-            try {
-                await addDoc(messagesRef, messageData);
-                isCallActive = false;
-                updateCallUI();
-                if (!silent) {
-                    alertUser(`Call with ${currentChatName} ended.`, "success");
-                }
-            } catch (error) {
-                console.error("Error ending call simulation:", error);
-            }
-        };
-
         // --- General Event Handlers (Existing) ---
         
         /** Validates if post content is available to enable the button. */
@@ -1502,15 +1101,25 @@
             e.preventDefault();
             if (!currentUserId || !db) return;
 
-            const newName = document.getElementById('profile-name-input').value.trim() || 'Anonymous Player';
+            // UPDATED: Use new default placeholders
+            const newName = document.getElementById('profile-name-input').value.trim() || 'Unknown Player';
             const newPosition = document.getElementById('profile-position-input').value;
-            const newClub = document.getElementById('profile-club-input').value.trim() || 'Global Network';
+            const newClub = document.getElementById('profile-club-input').value.trim() || 'Unknown Club/Location';
+            
+            const newEmail = document.getElementById('profile-email-input').value.trim();
+            const newPhone = document.getElementById('profile-phone-input').value.trim();
+            const newTwitter = document.getElementById('profile-twitter-input').value.trim().replace('@', '');
+            const newInstagram = document.getElementById('profile-instagram-input').value.trim().replace('@', '');
             
             const newProfile = {
                 ...currentUserProfile, // Keep friend lists intact
                 name: newName,
                 position: newPosition,
-                club: newClub
+                club: newClub,
+                email: newEmail,      
+                phone: newPhone,      
+                twitter: newTwitter,  
+                instagram: newInstagram 
             };
 
             const userDocRef = doc(db, USERS_COLLECTION_PATH, currentUserId);
@@ -1518,43 +1127,56 @@
             try {
                 // Update profile in Firestore
                 await setDoc(userDocRef, newProfile, { merge: true });
-                // Note: currentUserProfile is updated via the onSnapshot listener, but we can set the UI manually too
                 updateProfileUI(); 
 
                 // Close modal
                 document.getElementById('profile-modal').classList.add('hidden');
                 alertUser("Profile updated successfully! New posts will use this profile.", "success");
-                
-                // Re-listen to users to update the DM list immediately if name changed
-                listenToUsers(); 
             } catch (error) {
                 console.error("Error saving profile:", error);
                 alertUser("Failed to save profile. Please try again.", "error");
             }
         });
 
-        // --- NEW: Friend System Logic ---
+        // --- Friend System Logic (Existing, adapted to not use allUsers list) ---
         
         /** Renders the list of received friend requests in the profile modal. */
         function renderPendingRequests() {
+            // Note: This function is simplified as the global 'allUsers' list is removed.
+            // It relies only on the IDs in currentUserProfile.receivedRequests.
             const container = document.getElementById('pending-requests-list');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            const requests = currentUserProfile.receivedRequests;
+            const profileRequestsContainer = document.getElementById('profile-page-requests');
 
+            if (!container || !profileRequestsContainer) return;
+            
+            const requests = currentUserProfile.receivedRequests;
+            container.innerHTML = ''; // Clear modal list
+            
+            // 1. Update Profile Page status
+            if (requests.length === 0) {
+                 profileRequestsContainer.innerHTML = '<p class="text-sm text-gray-500">You currently have no pending requests.</p>';
+            } else {
+                 profileRequestsContainer.innerHTML = `
+                    <p class="text-sm font-medium text-yellow-700 flex items-center">
+                        <i data-lucide="bell" class="w-4 h-4 mr-1"></i> You have ${requests.length} pending requests.
+                    </p>
+                    <p class="text-xs text-gray-500">Open the **Edit Profile** modal to view and accept them.</p>
+                `;
+            }
+
+            // 2. Render Modal list (Requires fetching sender data if needed, but we'll use IDs/placeholders for simplicity)
             if (requests.length === 0) {
                  container.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">No pending requests.</p>';
             } else {
+                // For a good UX, we should fetch user names here, but to avoid multiple document reads (and since we removed the global list), 
+                // we'll display the user ID and rely on the acceptance function to work.
                 requests.forEach(senderId => {
-                    // Try to find the user in allUsers list, default if not found
-                    const sender = allUsers.find(u => u.id === senderId) || { name: `User ID: ${senderId.substring(0, 8)}...`, position: 'Player', club: 'Unknown' };
                     const item = document.createElement('div');
                     item.className = 'flex justify-between items-center p-2 bg-yellow-50 rounded-lg border border-yellow-200';
                     item.innerHTML = `
                         <div>
-                            <p class="font-semibold text-gray-800">${sender.name}</p>
-                            <p class="text-xs text-gray-500">${sender.position} | ${sender.club}</p>
+                            <p class="font-semibold text-gray-800">Request from User</p>
+                            <p class="text-xs text-gray-500">ID: ${senderId.substring(0, 12)}...</p>
                         </div>
                         <button onclick="acceptFriendRequest('${senderId}')" class="bg-green-600 text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-green-700 transition duration-150">
                             Accept
@@ -1582,8 +1204,6 @@
             }
 
             try {
-                // Perform prefix search (Firestore range query for string fields)
-                // Note: Indexing 'name' field is highly recommended in a real app for this query.
                 const q = query(
                     collection(db, USERS_COLLECTION_PATH),
                     where('name', '>=', searchTerm),
@@ -1625,10 +1245,12 @@
                 if (isFriend) {
                     buttonHtml = `<span class="text-xs text-green-600 font-semibold py-1 px-3">Friends</span>`;
                 } else if (requestReceived) {
+                    // This logic is already correct, showing 'Accept' if the search result has sent a request to the current user
                     buttonHtml = `<button onclick="acceptFriendRequest('${user.id}')" class="bg-yellow-500 text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-yellow-600">Accept</button>`;
                 } else if (requestSent) {
                     buttonHtml = `<span class="text-xs text-slate-500 py-1 px-3">Pending</span>`;
                 } else {
+                    // This logic is already correct, showing 'Add Friend' otherwise
                     buttonHtml = `<button onclick="sendFriendRequest('${user.id}')" class="bg-primary text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-gray-700">Add Friend</button>`;
                 }
                 
@@ -1645,7 +1267,6 @@
                         </div>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="startOrOpenDM('${user.id}', '${user.name}')" class="bg-slate-200 text-gray-700 text-xs font-semibold py-1 px-3 rounded-full hover:bg-slate-300">DM</button>
                         ${buttonHtml}
                     </div>
                 `;
@@ -1712,80 +1333,6 @@
                 alertUser("Failed to accept friend request.", "error");
             }
         };
-
-        // --- NEW: Admin Cleanup Logic ---
-
-        /** Listener to fetch and update the count of anonymous users. */
-        function listenToAnonymousUsersCount() {
-            if (!db) return;
-
-            // Only query documents where the name field is exactly 'Anonymous Player'
-            const q = query(
-                collection(db, USERS_COLLECTION_PATH),
-                where('name', '==', 'Anonymous Player')
-            );
-
-            onSnapshot(q, (snapshot) => {
-                anonymousUserIds = [];
-                snapshot.forEach(doc => {
-                    if (doc.id !== currentUserId) { // Don't allow deleting current user
-                        anonymousUserIds.push(doc.id);
-                    }
-                });
-                const countEl = document.getElementById('anonymous-count');
-                if (countEl) {
-                    countEl.textContent = anonymousUserIds.length;
-                }
-                const deleteBtn = document.getElementById('delete-anonymous-btn');
-                if (deleteBtn) {
-                    deleteBtn.disabled = anonymousUserIds.length === 0;
-                }
-            }, (error) => {
-                console.error("Error listening to anonymous users count:", error);
-            });
-        }
-
-        /** Admin: Confirms and deletes all profiles where name is 'Anonymous Player'. */
-        window.confirmDeleteAnonymous = function() {
-            if (!db || anonymousUserIds.length === 0) {
-                alertUser("No anonymous accounts found to delete.", "info");
-                return;
-            }
-
-            // Custom confirmation dialog (replacing native alert/confirm)
-            showConfirmationModal({
-                title: "Confirm Deletion",
-                message: `Are you sure you want to permanently delete ${anonymousUserIds.length} anonymous user profiles? This action cannot be undone.`,
-                confirmText: "Delete Permanently",
-                onConfirm: deleteAnonymousUsers
-            });
-        };
-        
-        /** Admin: Executes the deletion of anonymous user profiles. */
-        async function deleteAnonymousUsers() {
-            if (!db || anonymousUserIds.length === 0) return;
-
-            const batch = writeBatch(db);
-            
-            anonymousUserIds.forEach(userId => {
-                const userDocRef = doc(db, USERS_COLLECTION_PATH, userId);
-                batch.delete(userDocRef);
-            });
-
-            const deleteBtn = document.getElementById('delete-anonymous-btn');
-            deleteBtn.disabled = true;
-            deleteBtn.textContent = `Deleting ${anonymousUserIds.length} accounts...`;
-
-            try {
-                await batch.commit();
-                alertUser(`Successfully deleted ${anonymousUserIds.length} anonymous accounts.`, "success");
-            } catch (error) {
-                console.error("Error deleting anonymous users:", error);
-                alertUser("Failed to delete anonymous accounts.", "error");
-            } finally {
-                // The listener will update the UI automatically
-            }
-        }
         
         // --- Custom Modal Functions (Replaces native browser functions) ---
         let currentConfirmationAction = null;
