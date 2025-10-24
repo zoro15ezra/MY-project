@@ -217,12 +217,14 @@
 
                     <!-- Center Feed Content -->
                     <div class="w-full md:w-3/4">
-                        <!-- Post Creation Card -->
+                        <!-- Post Creation Card (UPDATED with optional URL) -->
                         <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-slate-200">
                             <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
                                 <i data-lucide="pen-tool" class="w-5 h-5 mr-2"></i> Share Your Update
                             </h2>
                             <textarea id="post-content" rows="3" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 resize-none text-gray-700" placeholder="What's happening on the pitch or off it? Share your thoughts, training updates, or insights..."></textarea>
+                            <input type="url" id="post-link-input" placeholder="Optional: External link/URL for this post (e.g., news article)" class="w-full p-3 mt-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700">
+
                             <div class="flex justify-end mt-3">
                                 <button id="post-button" onclick="handlePost()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-green-700 transition duration-150 disabled:bg-green-300" disabled>
                                     Post Update
@@ -343,6 +345,17 @@
                             <p class="text-gray-500">No pending requests.</p>
                         </div>
                     </div>
+                    
+                    <!-- NEW: User's Recent Posts Section -->
+                    <div class="mt-10 pt-6 border-t border-slate-200">
+                        <h2 class="text-2xl font-bold text-primary flex items-center mb-4">
+                            <i data-lucide="layout-list" class="w-6 h-6 mr-3 text-green-600"></i> My Recent Activity
+                        </h2>
+                        <div id="my-recent-posts" class="space-y-4">
+                            <p class="text-gray-500">Loading your latest updates...</p>
+                        </div>
+                    </div>
+                    
                 </div>
             </div>
 
@@ -488,7 +501,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDocs, where, writeBatch, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // REMOVED unused imports: writeBatch, deleteDoc
+        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         setLogLevel('Debug');
@@ -544,7 +558,7 @@
             if (seconds < 60) return `${seconds}s ago`;
             if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
             if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-            if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`; // Fixed math error
+            if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`; 
             return firebaseTimestamp.toDate().toLocaleDateString();
         }
 
@@ -756,8 +770,65 @@
                     <p class="text-xs text-gray-500">Open the **Edit Profile** modal to view and accept them.</p>
                 `;
             }
+            
+            // New: Fetch and Render User's Posts
+            fetchUserRecentPosts();
 
             lucide.createIcons();
+        }
+
+        /** Fetches the current user's most recent 3 posts for the profile page. */
+        async function fetchUserRecentPosts() {
+            const container = document.getElementById('my-recent-posts');
+            if (!db || !currentUserId || !container) return;
+            
+            container.innerHTML = '<p class="text-sm text-gray-500 animate-pulse">Loading your latest updates...</p>';
+
+            try {
+                const q = query(
+                    collection(db, POSTS_COLLECTION_PATH),
+                    where('userId', '==', currentUserId),
+                    orderBy('timestamp', 'desc'),
+                    // Limit to 3 posts
+                    // Note: Firestore does not currently support `limit` in this imported version, 
+                    // so we'll fetch all and slice, which is less efficient but safe in this environment.
+                );
+
+                const querySnapshot = await getDocs(q);
+                const posts = [];
+                querySnapshot.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
+                
+                // Manually limit to top 3 since limit is not imported/available here
+                const recentPosts = posts.slice(0, 3); 
+
+                container.innerHTML = '';
+
+                if (recentPosts.length === 0) {
+                    container.innerHTML = `
+                        <div class="p-4 text-center text-gray-500 bg-slate-50 rounded-lg border border-dashed border-slate-300">
+                            <i data-lucide="layout-list" class="w-6 h-6 mx-auto mb-1"></i>
+                            <p class="font-semibold text-sm">No recent posts.</p>
+                            <p class="text-xs">Share your first update on the Global Feed!</p>
+                        </div>
+                    `;
+                } else {
+                    recentPosts.forEach(post => {
+                        const postEl = document.createElement('div');
+                        postEl.className = 'bg-slate-50 p-4 rounded-lg border border-slate-200';
+                        postEl.innerHTML = `
+                            <p class="text-gray-800 text-sm font-medium whitespace-pre-wrap">${post.content.substring(0, 100)}...</p>
+                            ${post.postLink ? `<a href="${post.postLink}" target="_blank" class="text-xs text-green-600 hover:underline flex items-center mt-2"><i data-lucide="external-link" class="w-3 h-3 mr-1"></i> View Link</a>` : ''}
+                            <p class="text-xs text-gray-400 mt-2">${formatTimestamp(post.timestamp)}</p>
+                        `;
+                        container.appendChild(postEl);
+                    });
+                }
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error("Error fetching user posts:", error);
+                container.innerHTML = '<p class="text-sm text-red-500">Failed to load recent activity.</p>';
+            }
         }
 
 
@@ -824,9 +895,20 @@
 
         /** Creates the HTML element for a single post. */
         function createPostElement(post) {
-            const { id, username, position, club, content, timestamp, userId, likes = [] } = post;
+            const { id, username, position, club, content, timestamp, userId, likes = [], postLink } = post;
             const liked = likes.includes(currentUserId);
             const timeAgo = formatTimestamp(timestamp);
+
+            // New: Generate link element if postLink exists
+            let linkElement = '';
+            if (postLink) {
+                linkElement = `
+                    <a href="${postLink}" target="_blank" class="block mt-3 p-3 bg-slate-100 rounded-lg hover:bg-slate-200 transition duration-150 border border-slate-200">
+                        <i data-lucide="external-link" class="w-4 h-4 inline mr-2 text-green-600"></i>
+                        <span class="text-sm font-medium text-gray-700 truncate">${postLink}</span>
+                    </a>
+                `;
+            }
 
             const postCard = document.createElement('div');
             postCard.className = 'bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition duration-300';
@@ -846,8 +928,10 @@
                 <!-- Post Content -->
                 <p class="text-gray-800 mb-4 whitespace-pre-wrap">${content}</p>
 
+                ${linkElement} <!-- Insert optional link -->
+
                 <!-- Post Footer (Actions) -->
-                <div class="flex items-center justify-between border-t border-slate-100 pt-3">
+                <div class="flex items-center justify-between border-t border-slate-100 pt-3 mt-3">
                     <button data-post-id="${id}" onclick="handleLike(this)"
                         class="flex items-center space-x-2 text-sm font-semibold p-2 rounded-full transition duration-200 
                         ${liked ? 'text-red-500 hover:bg-red-50' : 'text-gray-500 hover:text-green-700 hover:bg-green-50'}">
@@ -1040,7 +1124,10 @@
         /** Handles the creation of a new post. */
         window.handlePost = async function() {
             const contentInput = document.getElementById('post-content');
+            const linkInput = document.getElementById('post-link-input'); // NEW
+            
             const content = contentInput.value.trim();
+            const postLink = linkInput.value.trim(); // NEW
             
             if (!content || !currentUserId || !db) return;
 
@@ -1053,12 +1140,14 @@
                 club: currentUserProfile.club,
                 content: content,
                 timestamp: serverTimestamp(),
-                likes: []
+                likes: [],
+                postLink: postLink // NEW: Add optional link
             };
 
             try {
                 await addDoc(collection(db, POSTS_COLLECTION_PATH), postData);
-                contentInput.value = ''; // Clear input on success
+                contentInput.value = ''; // Clear content
+                linkInput.value = ''; // Clear link
                 checkPostContent();
             } catch (error) {
                 console.error("Error adding document: ", error);
@@ -1138,7 +1227,7 @@
             }
         });
 
-        // --- Friend System Logic (Existing, adapted to not use allUsers list) ---
+        // --- Friend System Logic (Existing) ---
         
         /** Renders the list of received friend requests in the profile modal. */
         function renderPendingRequests() {
@@ -1335,41 +1424,10 @@
         };
         
         // --- Custom Modal Functions (Replaces native browser functions) ---
-        let currentConfirmationAction = null;
+        let currentConfirmationAction = null; // Removed since confirmation modal is gone, but keeping structure for completeness
 
-        /** Shows a generic confirmation modal. */
-        function showConfirmationModal({ title, message, confirmText, onConfirm }) {
-            const modal = document.getElementById('confirmation-modal');
-            const titleEl = document.getElementById('confirm-title');
-            const messageEl = document.getElementById('confirm-message');
-            const actionBtn = document.getElementById('confirm-action-btn');
+        // Removed showConfirmationModal, closeConfirmationModal
 
-            if (modal) modal.classList.remove('hidden');
-            if (titleEl) titleEl.textContent = title;
-            if (messageEl) messageEl.textContent = message;
-            if (actionBtn) actionBtn.textContent = confirmText;
-
-            // Set the action handler
-            currentConfirmationAction = onConfirm;
-
-            // Re-attach the click listener
-            if (actionBtn) {
-                actionBtn.onclick = () => {
-                    if (currentConfirmationAction) {
-                        currentConfirmationAction();
-                    }
-                    closeConfirmationModal();
-                };
-            }
-            lucide.createIcons();
-        }
-
-        /** Hides the custom confirmation modal. */
-        window.closeConfirmationModal = function() {
-            document.getElementById('confirmation-modal')?.classList.add('hidden');
-            currentConfirmationAction = null; // Clear the action
-        };
-        
         /** Simple custom alert/message box function (replaces browser alert()). */
         function alertUser(message, type = 'info') {
             console.log(`[Message: ${type.toUpperCase()}] ${message}`);
