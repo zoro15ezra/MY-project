@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>U.Scout - The Footballer Network</title>
     
-    <!-- Using the JIT CDN for optimized local development (as a replacement for the full CDN) -->
+    <!-- Using the JIT CDN for optimized local development -->
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     
     <!-- Tailwind Configuration Block (Simulating a local config setup) -->
@@ -104,10 +104,6 @@
         .home-content {
             z-index: 2;
         }
-        /* Confirmation Modal Styles */
-        #confirmation-modal {
-            transition: opacity 0.3s ease;
-        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -118,7 +114,7 @@
         <!-- Header -->
         <header class="primary-color shadow-lg p-4 sticky top-0 z-20">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <!-- LOGO SECTION: Custom SVG implemented here -->
+                <!-- LOGO SECTION: Custom SVG implemented here (U.Scout Logo) -->
                 <div class="text-2xl font-extrabold text-white flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7 mr-2 fill-current">
                         <!-- Football in Green (Theme Accent) -->
@@ -134,9 +130,8 @@
                 
                 <div class="flex items-center space-x-4">
                     <span id="user-greeting" class="hidden md:inline text-sm font-medium text-gray-300"></span>
-                    <!-- Button to open Profile EDITING Modal -->
                     <button onclick="document.getElementById('profile-modal').classList.remove('hidden')" class="bg-white text-gray-800 hover:bg-gray-200 px-3 py-1 rounded-full text-xs font-semibold shadow transition duration-150">
-                        <i data-lucide="user" class="w-4 h-4 inline mr-1 text-green-600"></i> Edit Profile
+                        <i data-lucide="user" class="w-4 h-4 inline mr-1 text-green-600"></i> Profile
                     </button>
                 </div>
             </div>
@@ -152,9 +147,8 @@
                 <button data-view="highlights" onclick="switchView('highlights')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
                     <i data-lucide="camera" class="w-5 h-5 mr-2"></i> Highlights
                 </button>
-                <!-- NEW: Profile Page View -->
-                <button data-view="my-profile" onclick="switchView('my-profile')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
-                    <i data-lucide="contact" class="w-5 h-5 mr-2"></i> My Profile
+                <button data-view="chat" onclick="switchView('chat')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
+                    <i data-lucide="message-square" class="w-5 h-5 mr-2"></i> Chat
                 </button>
             </nav>
         </header>
@@ -188,13 +182,14 @@
             <div id="feed-view" class="view-container hidden">
                 <div class="flex flex-col md:flex-row gap-6">
                     
-                    <!-- Left Sidebar (User Stats/Info) - Hidden on Mobile -->
+                    <!-- Left Sidebar (User Stats/Info) - Profile Page Summary -->
                     <div class="hidden md:block md:w-1/4">
                         <div id="user-info-card" class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 sticky top-20">
                             <h3 class="text-lg font-bold mb-2 text-gray-800 flex items-center">
                                 <i data-lucide="user-check" class="w-5 h-5 mr-2 text-green-600"></i> Player Hub
                             </h3>
                             <div class="space-y-3">
+                                <!-- Core Details -->
                                 <div>
                                     <p class="text-xs text-gray-500">Player Name</p>
                                     <p id="profile-name-display" class="font-semibold text-gray-900 truncate">...</p>
@@ -207,6 +202,20 @@
                                     <p class="text-xs text-gray-500">Club / Location</p>
                                     <p id="profile-club-display" class="text-sm text-gray-700">...</p>
                                 </div>
+                                
+                                <!-- Contact/Social Display (NEW) -->
+                                <div id="profile-contact-display" class="pt-2 border-t mt-4 space-y-2">
+                                    <p class="text-xs font-bold text-gray-500">Contact</p>
+                                    <p id="profile-phone-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="phone" class="w-4 h-4 mr-1 text-green-600"></i><span id="phone-text"></span></p>
+                                    <p id="profile-email-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="mail" class="w-4 h-4 mr-1 text-green-600"></i><span id="email-text"></span></p>
+                                </div>
+                                <div id="profile-social-display" class="pt-2 border-t mt-4 space-y-2">
+                                    <p class="text-xs font-bold text-gray-500">Social Media</p>
+                                    <p id="profile-instagram-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="instagram" class="w-4 h-4 mr-1 text-green-600"></i><span id="instagram-text"></span></p>
+                                    <p id="profile-twitter-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="twitter" class="w-4 h-4 mr-1 text-green-600"></i><span id="twitter-text"></span></p>
+                                </div>
+                                <!-- END Contact/Social Display -->
+                                
                                 <div class="pt-2 border-t mt-4">
                                     <p class="text-xs text-gray-500">Global User ID (Share to Connect)</p>
                                     <code id="user-id-display" class="text-xs break-all bg-slate-100 p-1 rounded font-mono text-primary cursor-pointer" title="Click to Copy">Loading...</code>
@@ -217,14 +226,12 @@
 
                     <!-- Center Feed Content -->
                     <div class="w-full md:w-3/4">
-                        <!-- Post Creation Card (UPDATED with optional URL) -->
+                        <!-- Post Creation Card -->
                         <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-slate-200">
                             <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
                                 <i data-lucide="pen-tool" class="w-5 h-5 mr-2"></i> Share Your Update
                             </h2>
                             <textarea id="post-content" rows="3" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 resize-none text-gray-700" placeholder="What's happening on the pitch or off it? Share your thoughts, training updates, or insights..."></textarea>
-                            <input type="url" id="post-link-input" placeholder="Optional: External link/URL for this post (e.g., news article)" class="w-full p-3 mt-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700">
-
                             <div class="flex justify-end mt-3">
                                 <button id="post-button" onclick="handlePost()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-green-700 transition duration-150 disabled:bg-green-300" disabled>
                                     Post Update
@@ -246,18 +253,18 @@
                 </div>
             </div>
 
-            <!-- Highlights (Reels) View - UPDATED -->
+            <!-- Highlights (Reels) View - Open Gallery Page -->
             <div id="highlights-view" class="view-container hidden">
                 <h1 class="text-3xl font-extrabold text-primary mb-6 border-b pb-2">Top Player Highlights (Reels)</h1>
                 <p class="text-lg text-gray-600 mb-8">Upload your best skills, goals, and training clips to get seen by the community!</p>
                 
-                <!-- Highlight Submission Card (NEW) -->
+                <!-- Highlight Submission Card -->
                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-slate-200">
                     <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
                         <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i> Submit Your Best Highlight
                     </h2>
                     
-                    <!-- NEW: File Upload Button/Label -->
+                    <!-- File Upload Button/Label -->
                     <label for="highlight-file" class="block w-full text-center py-4 border-2 border-dashed border-green-300 rounded-lg cursor-pointer bg-green-50 hover:bg-green-100 transition duration-150 mb-4">
                         <i data-lucide="video" class="w-6 h-6 mx-auto mb-1 text-primary"></i>
                         <span id="file-upload-label" class="text-sm font-semibold text-gray-700">Select a video file from your device (Max 60s simulated)</span>
@@ -277,7 +284,7 @@
                     <p id="highlight-error" class="text-sm text-red-500 mt-2 hidden">Please provide a video file or a public link.</p>
                 </div>
 
-                <!-- Dynamic Container (replaces static grid) -->
+                <!-- Dynamic Container -->
                 <div id="highlights-container" class="highlight-grid">
                     <div id="highlights-loading" class="col-span-full text-center p-8 text-gray-500">
                         <div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-primary border-t-transparent rounded-full mb-2"></div>
@@ -286,76 +293,59 @@
                 </div>
             </div>
             
-            <!-- NEW: My Profile View (Replaces Chat) -->
-            <div id="my-profile-view" class="view-container hidden max-w-4xl mx-auto">
-                <div class="bg-white rounded-xl shadow-2xl p-6 sm:p-10 border border-slate-200">
-                    <div class="text-center mb-8">
-                        <div class="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center text-green-700 font-bold text-4xl mx-auto mb-4 border-4 border-green-300">
-                            <span id="profile-initials">A</span>
-                        </div>
-                        <h1 id="profile-page-name" class="text-4xl font-extrabold text-gray-900">Player Name</h1>
-                        <p id="profile-page-position" class="text-xl font-semibold text-green-600 mt-1">Position</p>
-                        <p id="profile-page-club" class="text-md text-gray-500">Club / Location</p>
-                    </div>
-
-                    <!-- Contact & Social Media Section -->
-                    <div class="grid md:grid-cols-2 gap-8 mt-8 pt-6 border-t border-slate-200">
-                        <!-- Left: Main Contact -->
-                        <div class="space-y-4">
-                            <h2 class="text-2xl font-bold text-primary flex items-center mb-4 border-b pb-2">
-                                <i data-lucide="mail" class="w-6 h-6 mr-3 text-green-600"></i> Contact Details
-                            </h2>
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="at-sign" class="w-5 h-5 text-gray-500"></i>
-                                <span class="font-medium text-gray-700">Email:</span>
-                                <span id="profile-page-email" class="text-gray-900 font-semibold truncate">Not set</span>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="phone" class="w-5 h-5 text-gray-500"></i>
-                                <span class="font-medium text-gray-700">Phone:</span>
-                                <span id="profile-page-phone" class="text-gray-900 font-semibold truncate">Not set</span>
-                            </div>
-                        </div>
-
-                        <!-- Right: Social Media -->
-                        <div class="space-y-4">
-                            <h2 class="text-2xl font-bold text-primary flex items-center mb-4 border-b pb-2">
-                                <i data-lucide="users" class="w-6 h-6 mr-3 text-green-600"></i> Social Media
-                            </h2>
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="link" class="w-5 h-5 text-gray-500"></i>
-                                <span class="font-medium text-gray-700">Twitter/X:</span>
-                                <a id="profile-page-twitter" target="_blank" class="text-blue-600 hover:underline cursor-pointer font-semibold truncate">Not set</a>
-                            </div>
-                            <div class="flex items-center space-x-3">
-                                <i data-lucide="instagram" class="w-5 h-5 text-gray-500"></i>
-                                <span class="font-medium text-gray-700">Instagram:</span>
-                                <a id="profile-page-instagram" target="_blank" class="text-pink-600 hover:underline cursor-pointer font-semibold truncate">Not set</a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Friend Requests Section (Still needed for the networking feature) -->
-                    <div class="mt-10 pt-6 border-t border-slate-200">
-                        <h2 class="text-2xl font-bold text-primary flex items-center mb-4">
-                            <i data-lucide="user-plus" class="w-6 h-6 mr-3 text-green-600"></i> Pending Friend Requests
+            <!-- Chat View -->
+            <div id="chat-view" class="view-container hidden">
+                <div class="flex h-[80vh] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    
+                    <!-- Chat List (Left Pane) -->
+                    <div id="chat-list" class="w-full md:w-1/3 border-r border-slate-200 p-4 space-y-4 overflow-y-auto">
+                        
+                        <!-- Global Chat -->
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i data-lucide="messages-square" class="w-5 h-5 mr-2 text-primary"></i> Channels
                         </h2>
-                        <div id="profile-page-requests" class="space-y-3">
-                            <!-- Requests will be rendered here -->
-                            <p class="text-gray-500">No pending requests.</p>
+                        <div id="global-chat-room" data-chat-id="global_team_chat" onclick="openChat('global_team_chat', 'Global Team Chat')" 
+                            class="p-3 bg-green-50 hover:bg-green-100 rounded-lg cursor-pointer transition duration-150 border border-green-200">
+                            <p class="font-semibold text-primary">Global Team Chat</p>
+                            <p class="text-xs text-gray-500 truncate">Connect with players worldwide...</p>
+                        </div>
+                        
+                        <!-- Direct Message List -->
+                        <h3 class="text-sm font-bold text-gray-500 mt-6 border-t pt-4">Direct Messages (Follow/DM)</h3>
+                        <div id="dm-list-container" class="space-y-2">
+                            <div id="dm-list-loading" class="text-xs text-gray-400 text-center py-2">Loading users...</div>
+                            <!-- User list for DMs will be dynamically loaded here -->
                         </div>
                     </div>
                     
-                    <!-- NEW: User's Recent Posts Section -->
-                    <div class="mt-10 pt-6 border-t border-slate-200">
-                        <h2 class="text-2xl font-bold text-primary flex items-center mb-4">
-                            <i data-lucide="layout-list" class="w-6 h-6 mr-3 text-green-600"></i> My Recent Activity
-                        </h2>
-                        <div id="my-recent-posts" class="space-y-4">
-                            <p class="text-gray-500">Loading your latest updates...</p>
+                    <!-- Chat Room (Right Pane) -->
+                    <div id="chat-room-container" class="w-full md:w-2/3 flex flex-col hidden md:flex">
+                        
+                        <!-- Chat Header with Mobile Back Button -->
+                        <div id="chat-room-header" class="p-4 border-b border-slate-200 bg-slate-50 flex items-center">
+                            <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
+                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                            </button>
+                            <h3 id="chat-room-title" class="text-lg font-bold text-gray-800">Select a Chat</h3>
+                        </div>
+                        
+                        <div id="messages-container" class="flex-grow p-4 space-y-3 overflow-y-auto custom-scrollbar">
+                            <!-- Messages will be rendered here -->
+                            <div id="chat-placeholder" class="text-center text-gray-500 mt-20">
+                                <i data-lucide="sparkles" class="w-8 h-8 mx-auto mb-2"></i>
+                                <p>Start a conversation in a global channel or DM a player!</p>
+                            </div>
+                        </div>
+                        
+                        <div id="chat-input-area" class="p-4 border-t border-slate-200 bg-white hidden">
+                            <div class="flex space-x-3">
+                                <input type="text" id="chat-message-input" placeholder="Type your message..." class="flex-grow p-3 border border-slate-300 rounded-full focus:ring-green-500 focus:border-green-500">
+                                <button onclick="sendChatMessage()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full hover:bg-green-700 transition duration-150">
+                                    Send
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    
                 </div>
             </div>
 
@@ -376,1087 +366,321 @@
                     <i data-lucide="camera" class="w-6 h-6"></i>
                     <span class="text-xs font-medium mt-1">Highlights</span>
                 </button>
-                <!-- NEW: Profile Page View -->
-                <button data-view="my-profile" onclick="switchView('my-profile')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
-                    <i data-lucide="contact" class="w-6 h-6"></i>
-                    <span class="text-xs font-medium mt-1">Profile</span>
+                <button data-view="chat" onclick="switchView('chat')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
+                    <i data-lucide="message-square" class="w-6 h-6"></i>
+                    <span class="text-xs font-medium mt-1">Chat</span>
                 </button>
             </nav>
         </footer>
 
     </div>
 
-    <!-- Profile Edit Modal (UPDATED with Go Back/Close and removed Admin Cleanup) -->
+    <!-- Profile Edit Modal -->
     <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
-            
-            <!-- NEW: Modal Header with Close Button -->
-            <div class="flex justify-between items-center mb-4 border-b pb-2">
-                <h3 class="text-xl font-bold text-primary">Edit Player Profile</h3>
-                <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600 p-1 rounded-full">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
-            </div>
-
+            <h3 class="text-xl font-bold mb-4 text-primary">Edit Player Profile</h3>
             <form id="profile-form">
-                <div class="space-y-4">
-                    <h4 class="text-lg font-semibold text-gray-800 border-b pb-1 mb-3">General Info</h4>
-                    <div class="mb-4">
-                        <label for="profile-name-input" class="block text-sm font-medium text-gray-700 mb-1">Full Name / Nickname</label>
-                        <input type="text" id="profile-name-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                <!-- Core Details -->
+                <div class="mb-4">
+                    <label for="profile-name-input" class="block text-sm font-medium text-gray-700 mb-1">Full Name / Nickname</label>
+                    <input type="text" id="profile-name-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="profile-position-input" class="block text-sm font-medium text-gray-700 mb-1">Playing Position</label>
+                    <select id="profile-position-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                        <option value="Unspecified">Select Position</option>
+                        <option value="Goalkeeper">Goalkeeper</option>
+                        <option value="Defender">Defender</option>
+                        <option value="Midfielder">Midfielder</option>
+                        <option value="Forward">Forward</option>
+                        <option value="Coach/Staff">Coach/Staff</option>
+                    </select>
+                </div>
+                <div class="mb-6">
+                    <label for="profile-club-input" class="block text-sm font-medium text-gray-700 mb-1">Current Club / Country</label>
+                    <input type="text" id="profile-club-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                
+                <h4 class="text-md font-bold mb-3 text-primary border-t pt-4">Contact Info (For Scouts)</h4>
+                <!-- NEW: Phone and Email -->
+                <div class="mb-4">
+                    <label for="profile-phone-input" class="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
+                    <input type="tel" id="profile-phone-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="+123 456 7890">
+                </div>
+                <div class="mb-6">
+                    <label for="profile-email-input" class="block text-sm font-medium text-gray-700 mb-1">Email Address (Optional)</label>
+                    <input type="email" id="profile-email-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="your.agent@example.com">
+                </div>
+
+                <h4 class="text-md font-bold mb-3 text-primary border-t pt-4">Social Media Handles</h4>
+                <!-- NEW: Instagram Handle -->
+                <div class="mb-4">
+                    <label for="profile-instagram-input" class="block text-sm font-medium text-gray-700 mb-1">Instagram Handle (Optional)</label>
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center p-2 bg-slate-100 border border-r-0 border-slate-300 rounded-l-lg text-gray-500 text-sm">@</span>
+                        <input type="text" id="profile-instagram-input" placeholder="e.g., lionel_messi" class="w-full p-2 border border-slate-300 rounded-r-lg focus:ring-green-500 focus:border-green-500">
                     </div>
-                    <div class="mb-4">
-                        <label for="profile-position-input" class="block text-sm font-medium text-gray-700 mb-1">Playing Position</label>
-                        <select id="profile-position-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                            <option value="Unspecified">Select Position</option>
-                            <option value="Goalkeeper">Goalkeeper</option>
-                            <option value="Defender">Defender</option>
-                            <option value="Midfielder">Midfielder</option>
-                            <option value="Forward">Forward</option>
-                            <option value="Coach/Staff">Coach/Staff</option>
-                        </select>
-                    </div>
-                    <div class="mb-4">
-                        <label for="profile-club-input" class="block text-sm font-medium text-gray-700 mb-1">Current Club / Country</label>
-                        <input type="text" id="profile-club-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                    </div>
-                    
-                    <h4 class="text-lg font-semibold text-gray-800 border-b pb-1 mb-3 pt-4">Contact & Social Links</h4>
-                    <div class="mb-4">
-                        <label for="profile-email-input" class="block text-sm font-medium text-gray-700 mb-1">Public Email</label>
-                        <input type="email" id="profile-email-input" placeholder="e.g., your.scout@email.com" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                    </div>
-                    <div class="mb-4">
-                        <label for="profile-phone-input" class="block text-sm font-medium text-gray-700 mb-1">Public Phone / WhatsApp</label>
-                        <input type="tel" id="profile-phone-input" placeholder="e.g., +1 555 123 4567" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                    </div>
-                    <div class="mb-4">
-                        <label for="profile-twitter-input" class="block text-sm font-medium text-gray-700 mb-1">Twitter/X Handle (e.g., @player_x)</label>
-                        <input type="text" id="profile-twitter-input" placeholder="e.g., @Cristiano" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                    </div>
-                    <div class="mb-6">
-                        <label for="profile-instagram-input" class="block text-sm font-medium text-gray-700 mb-1">Instagram Handle (e.g., @player_x)</label>
-                        <input type="text" id="profile-instagram-input" placeholder="e.g., @leomessi" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
+                </div>
+                <!-- NEW: X/Twitter Handle -->
+                <div class="mb-6">
+                    <label for="profile-twitter-input" class="block text-sm font-medium text-gray-700 mb-1">X (Twitter) Handle (Optional)</label>
+                    <div class="flex items-center">
+                        <span class="inline-flex items-center p-2 bg-slate-100 border border-r-0 border-slate-300 rounded-l-lg text-gray-500 text-sm">@</span>
+                        <input type="text" id="profile-twitter-input" placeholder="e.g., cristiano" class="w-full p-2 border border-slate-300 rounded-r-lg focus:ring-green-500 focus:border-green-500">
                     </div>
                 </div>
                 
                 <div class="flex justify-end space-x-3">
                     <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="bg-slate-200 text-gray-700 font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition duration-150">
-                        Close
+                        Cancel
                     </button>
                     <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition duration-150">
                         Save Profile
                     </button>
                 </div>
             </form>
-
-            <!-- User Search Feature -->
-            <div class="mt-8 pt-4 border-t border-slate-200">
-                <h3 class="text-lg font-bold mb-3 text-primary flex items-center">
-                    <i data-lucide="search" class="w-5 h-5 mr-2"></i> Player Search & Connect
-                </h3>
-                <div class="flex space-x-2 mb-3">
-                    <input type="text" id="user-search-input" placeholder="Search by name..." class="flex-grow p-2 border border-slate-300 rounded-lg">
-                    <button onclick="searchUsers()" class="bg-primary text-white font-semibold px-4 rounded-lg hover:bg-gray-700 transition duration-150">
-                        Search
-                    </button>
-                </div>
-                <div id="user-search-results" class="max-h-40 overflow-y-auto space-y-2">
-                    <p class="text-sm text-gray-500 text-center py-2">Enter a name and hit search to find other players.</p>
-                </div>
-            </div>
-
-            <!-- Pending Requests Indicator -->
-            <div class="mt-8 pt-4 border-t border-slate-200">
-                 <h3 class="text-lg font-bold mb-3 text-primary flex items-center">
-                    <i data-lucide="users" class="w-5 h-5 mr-2"></i> Friend Requests
-                </h3>
-                <div id="pending-requests-list" class="max-h-40 overflow-y-auto space-y-2">
-                    <p class="text-sm text-gray-500 text-center py-2">No pending requests.</p>
-                </div>
-            </div>
-            
-        </div>
-    </div>
-    
-    <!-- Custom Confirmation Modal (Replaces window.confirm) -->
-    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-70 z-[60] hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6 transform scale-100 opacity-100 transition-all duration-300">
-            <h3 id="confirm-title" class="text-xl font-bold mb-3 text-red-700 flex items-center">
-                <i data-lucide="alert-triangle" class="w-6 h-6 mr-2"></i> Confirmation
-            </h3>
-            <p id="confirm-message" class="text-gray-700 mb-6">Are you sure?</p>
-            <div class="flex justify-end space-x-3">
-                <button onclick="closeConfirmationModal()" class="bg-slate-200 text-gray-700 font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition duration-150">
-                    Cancel
-                </button>
-                <button id="confirm-action-btn" class="bg-red-500 text-white font-semibold py-2 px-4 rounded-full hover:bg-red-600 transition duration-150">
-                    Confirm
-                </button>
-            </div>
         </div>
     </div>
     
     <!-- Script Imports -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        // REMOVED unused imports: writeBatch, deleteDoc
-        import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp, getDocs, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+  import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCfcDDG3e7KTBevfFfl99oaT5Z_hv4q5iY",
+    authDomain: "uscout-football-network.firebaseapp.com",
+    projectId: "uscout-football-network",
+    storageBucket: "uscout-football-network.appspot.com",
+    messagingSenderId: "1072495022545",
+    appId: "1:1072495022545:web:891dca6138f1ef691c50f0",
+    measurementId: "G-9VC117MXGF"
+  };
+
+  let app, db, auth, storage;
+  let currentUserId = null;
+  let currentUserProfile = { name: 'Anonymous Player', position:'', club:'', followers:[], following:[] };
+  let allUsers = [];
+  const USERS_COLLECTION = "users";
+  const POSTS_COLLECTION = "football_posts";
+  const HIGHLIGHTS_COLLECTION = "football_highlights";
+  const CHATS_COLLECTION = "football_chats";
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initFirebase();
+    // wire some UI events if elements exist
+    document.getElementById('chat-message-input')?.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChatMessage(); }});
+    document.getElementById('discover-tab-btn')?.addEventListener('click', ()=>{ switchView('discover'); });
+    document.getElementById('home-tab-btn')?.addEventListener('click', ()=>{ switchView('home'); });
+  });
+
+  async function initFirebase(){
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    storage = getStorage(app);
+    try {
+      await setPersistence(auth, browserLocalPersistence);
+      await signInAnonymously(auth);
+    } catch (e) {
+      console.warn("Auth fallback:", e);
+    }
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){ currentUserId = user.uid; await ensureUserDoc(user.uid); }
+      else { currentUserId = null; }
+      listenToFeed();
+      listenToUsers();
+      listenToHighlights();
+      switchView('home');
+    });
+  }
+
+  async function ensureUserDoc(uid){
+    const ref = doc(db, USERS_COLLECTION, uid);
+    const snap = await getDoc(ref);
+    if(!snap.exists()){
+      const base = { name: 'Player '+uid.substring(0,6), position:'', club:'', followers:[], following:[] };
+      await setDoc(ref, base);
+      currentUserProfile = base;
+    } else {
+      currentUserProfile = { ...currentUserProfile, ...snap.data() };
+    }
+    currentUserProfile.id = uid;
+    updateProfileUI();
+  }
+
+  function updateProfileUI(){
+    const elName = document.getElementById('profile-name-display'); if(elName) elName.textContent = currentUserProfile.name || '';
+    const elMeta = document.getElementById('profile-position-display'); if(elMeta) elMeta.textContent = `${currentUserProfile.position || ''} ${currentUserProfile.club ? '• '+currentUserProfile.club : ''}`;
+    const countEl = document.getElementById('profile-follow-counts'); if(countEl) countEl.textContent = `${(currentUserProfile.followers||[]).length} Followers • ${(currentUserProfile.following||[]).length} Following`;
+  }
+
+  // --- Feed ---
+  function listenToFeed(){
+    try{
+      const q = query(collection(db, POSTS_COLLECTION), orderBy('timestamp','desc'));
+      onSnapshot(q, snap=>{
+        const posts = []; snap.forEach(d=>posts.push({id:d.id, ...d.data()})); renderFeed(posts);
+      }, err=>{ console.error("Feed error",err); const li=document.getElementById('loading-indicator'); if(li) li.innerHTML='<p class="text-red-500">Error fetching feed data.</p>'; });
+    }catch(e){ console.error(e); }
+  }
+
+  function renderFeed(posts){
+    const c = document.getElementById('feed-container'); if(!c) return; c.innerHTML='';
+    if(posts.length===0){ c.innerHTML='<div class="p-6 text-center text-gray-500">No posts yet.</div>'; return; }
+    posts.forEach(p=>{ const card=document.createElement('div'); card.className='post-card'; card.innerHTML=`<b>${escapeHtml(p.username||'Anon')}</b><p>${escapeHtml(p.content||'')}</p>`; c.appendChild(card); });
+  }
+
+  // --- Highlights listener (unchanged) ---
+  function listenToHighlights(){
+    try{
+      const q = query(collection(db, HIGHLIGHTS_COLLECTION), orderBy('timestamp','desc'));
+      onSnapshot(q, snap=>{ const arr=[]; snap.forEach(d=>arr.push({id:d.id,...d.data()})); renderHighlights(arr); }, err=>{ console.error(err); });
+    }catch(e){ console.error(e); }
+  }
+  function renderHighlights(list){ const c=document.getElementById('highlights-container'); if(!c) return; c.innerHTML=''; list.forEach(h=>{ const a=document.createElement('a'); a.href=h.videoUrl||'#'; a.target='_blank'; a.className='highlight-card'; a.textContent = `${h.title||'Highlight'} — ${h.username||''}`; c.appendChild(a); }); }
+
+  // --- Users listener, follow logic, suggestions, profile modal, discover tab ---
+  function listenToUsers(){
+    try{
+      const q = query(collection(db, USERS_COLLECTION), orderBy('name','asc'));
+      onSnapshot(q, snap=>{
+        allUsers = [];
+        snap.forEach(d=>{ const u={id:d.id, ...d.data()}; allUsers.push(u); });
+        renderUserList();
+        renderSuggestionsPanel();
+      }, err=>{ console.error("Users listen error", err); });
+    }catch(e){ console.error(e); }
+  }
+
+  function renderUserList(){
+    const container = document.getElementById('dm-list-container'); if(!container) return; container.innerHTML='';
+    const following = new Set(currentUserProfile.following||[]);
+    allUsers.filter(u=>u.id!==currentUserId).forEach(u=>{
+      const row=document.createElement('div'); row.className='dm-row';
+      row.innerHTML = `<div class="dm-info"><div class="dm-name">${escapeHtml(u.name)}</div><div class="dm-meta">${escapeHtml(u.position||'')} ${u.club? '• '+escapeHtml(u.club):''}</div></div>
+      <div class="dm-actions">
+        <button class="follow-btn ${following.has(u.id)?'following':''}" data-uid="${u.id}">${following.has(u.id)?'Following':'Follow'}</button>
+        <button class="msg-btn" data-uid="${u.id}">Message</button>
+      </div>`;
+      container.appendChild(row);
+    });
+    // wire buttons
+    container.querySelectorAll('.follow-btn').forEach(b=>{ b.onclick = async ()=>{ await toggleFollow(b.dataset.uid, b); }; });
+    container.querySelectorAll('.msg-btn').forEach(b=>{ b.onclick = ()=> startOrOpenDM(b.dataset.uid, b.closest('.dm-row').querySelector('.dm-name').textContent); });
+  }
+
+  async function toggleFollow(targetUid, btn){
+    if(!currentUserId) return alert('Sign in required');
+    if(currentUserId===targetUid) return;
+    btn.disabled=true;
+    const meRef = doc(db, USERS_COLLECTION, currentUserId);
+    const themRef = doc(db, USERS_COLLECTION, targetUid);
+    try{
+      const isFollowing = (currentUserProfile.following||[]).includes(targetUid);
+      if(isFollowing){
+        await updateDoc(meRef, { following: arrayRemove(targetUid) });
+        await updateDoc(themRef, { followers: arrayRemove(currentUserId) });
+        currentUserProfile.following = (currentUserProfile.following||[]).filter(id=>id!==targetUid);
+      } else {
+        await updateDoc(meRef, { following: arrayUnion(targetUid) });
+        await updateDoc(themRef, { followers: arrayUnion(currentUserId) });
+        currentUserProfile.following = [...(currentUserProfile.following||[]), targetUid];
+      }
+      updateProfileUI();
+      renderUserList();
+      renderSuggestionsPanel();
+    }catch(e){ console.error(e); alert('Failed to update follow'); }
+    btn.disabled=false;
+  }
+
+  // Profile modal
+  async function openUserProfile(userId){
+    const modal = document.getElementById('view-profile-modal'); const overlay = document.getElementById('view-profile-overlay');
+    try{
+      const snap = await getDoc(doc(db, USERS_COLLECTION, userId));
+      if(!snap.exists()){ alert('User not found'); return; }
+      const data = snap.data();
+      document.getElementById('view-profile-name').textContent = data.name || 'Player';
+      document.getElementById('view-profile-meta').textContent = `${data.position||''} ${data.club? '• '+data.club:''}`;
+      document.getElementById('view-profile-stats').textContent = `${(data.followers||[]).length} Followers • ${(data.following||[]).length} Following`;
+      // build lists
+      const fList = document.getElementById('view-profile-followers-list'); fList.innerHTML=''; (data.followers||[]).slice(0,50).forEach(async uid=>{ const s = await getDoc(doc(db, USERS_COLLECTION, uid)); if(s.exists()){ const u=s.data(); const el=document.createElement('div'); el.className='mini-user'; el.innerHTML=`<div>${u.name||'Player'}</div><div class="mini-actions"><button onclick="openUserProfile(\'${uid}\')">View</button></div>`; fList.appendChild(el); } });
+      const foList = document.getElementById('view-profile-following-list'); foList.innerHTML=''; (data.following||[]).slice(0,50).forEach(async uid=>{ const s = await getDoc(doc(db, USERS_COLLECTION, uid)); if(s.exists()){ const u=s.data(); const el=document.createElement('div'); el.className='mini-user'; el.innerHTML=`<div>${u.name||'Player'}</div><div class="mini-actions"><button onclick="openUserProfile(\'${uid}\')">View</button></div>`; foList.appendChild(el); } });
+      overlay.classList.remove('hidden'); modal.classList.remove('hidden');
+    }catch(e){ console.error(e); alert('Failed to load profile'); }
+  }
+  window.openUserProfile = openUserProfile;
+  window.closeViewProfile = ()=>{ document.getElementById('view-profile-overlay').classList.add('hidden'); document.getElementById('view-profile-modal').classList.add('hidden'); };
+
+  // Suggestions (Discover tab)
+  function renderSuggestionsPanel(){
+    const panel = document.getElementById('discover-container'); if(!panel) return;
+    panel.innerHTML='';
+    const following = new Set(currentUserProfile.following||[]);
+    const candidates = allUsers.filter(u=>u.id!==currentUserId && !following.has(u.id));
+    const sample = candidates.sort(()=>0.5-Math.random()).slice(0,6);
+    if(sample.length===0){ panel.innerHTML='<p class="text-xs text-gray-500">No suggestions</p>'; return; }
+    sample.forEach(u=>{
+      const card=document.createElement('div'); card.className='suggest-card';
+      card.innerHTML = `<div class="s-left"><div class="s-name">${escapeHtml(u.name)}</div><div class="s-meta">${escapeHtml(u.position||'')} ${u.club? '• '+escapeHtml(u.club):''}</div></div>
+      <div class="s-actions"><button class="btn-follow" data-uid="${u.id}">Follow</button> <button class="btn-msg" data-uid="${u.id}">Message</button></div>`;
+      panel.appendChild(card);
+    });
+    panel.querySelectorAll('.btn-follow').forEach(b=>b.addEventListener('click', (e)=>{ toggleFollow(b.dataset.uid, b); }));
+    panel.querySelectorAll('.btn-msg').forEach(b=>b.addEventListener('click', (e)=>{ startOrOpenDM(b.dataset.uid, b.closest('.suggest-card').querySelector('.s-name').textContent); }));
+  }
+
+  // Chat stubs (kept minimal)
+  function startOrOpenDM(uid, name){ /* reuse existing chat logic if present */ alert('Open chat with '+name); }
+
+  // Utilities
+  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, (m)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+
+  // basic view switcher (home, discover)
+  function switchView(view){
+    ['home-view','discover-view','highlights-view','chat-view'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('hidden'); });
+    const v = document.getElementById(view+'-view'); if(v) v.classList.remove('hidden');
+    document.querySelectorAll('.view-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('data-view')===view));
+    if(view==='discover') renderSuggestionsPanel();
+  }
+  window.switchView = switchView;
+
+</script>
+
+<!-- Injected: Profile Modal -->
+<div id="view-profile-overlay" class="fixed inset-0 bg-black/50 hidden"></div>
+<div id="view-profile-modal" class="fixed z-50 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden w-full max-w-xl bg-white rounded-xl shadow-2xl p-6">
+  <div class="flex justify-between items-start mb-4">
+    <div>
+      <h3 id="view-profile-name" class="text-2xl font-bold">Player</h3>
+      <p id="view-profile-meta" class="text-sm text-gray-500">Position • Club</p>
+      <p id="view-profile-stats" class="text-xs text-gray-400 mt-2"></p>
+    </div>
+    <div id="view-profile-follow-btn"></div>
+  </div>
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <h4 class="font-semibold text-sm mb-2">Followers</h4>
+      <div id="view-profile-followers-list" class="max-h-48 overflow-y-auto p-2 bg-slate-50 rounded"></div>
+    </div>
+    <div>
+      <h4 class="font-semibold text-sm mb-2">Following</h4>
+      <div id="view-profile-following-list" class="max-h-48 overflow-y-auto p-2 bg-slate-50 rounded"></div>
+    </div>
+  </div>
+  <div class="flex justify-end mt-4">
+    <button onclick="closeViewProfile()" class="px-4 py-2 rounded-full bg-slate-200 hover:bg-slate-300">Close</button>
+  </div>
+</div>
+
+<!-- Injected: Discover view container (tab) -->
+<div id="discover-view" class="hidden p-4">
+  <h3 class="text-lg font-bold mb-3">Discover Players</h3>
+  <div id="discover-container" class="grid grid-cols-1 gap-3"></div>
+</div>
 
-        setLogLevel('Debug');
-
-        // --- Global Variables (Firebase Configuration - HARDCODED) ---
-        const firebaseConfig = {
-            apiKey: "AIzaSyCfcDDG3e7KTBevfFfl99oaT5Z_hv4q5iY",
-            authDomain: "uscout-football-network.firebaseapp.com",
-            projectId: "uscout-football-network",
-            storageBucket: "uscout-football-network.firebasestorage.app",
-            messagingSenderId: "1072495022545",
-            appId: "1:1072495022545:web:891dca6138f1ef691c50f0",
-            measurementId: "G-9VC117MXGF"     
-        };
-        const appId = firebaseConfig.projectId; 
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null; 
-
-        let db;
-        let auth;
-        let currentUserId = null;
-        let currentUserProfile = {
-            // UPDATED DEFAULT PLACEHOLDERS
-            name: 'Unknown Player',
-            position: 'Unspecified',
-            club: 'Unknown Club/Location',
-            friendList: [], 
-            sentRequests: [], 
-            receivedRequests: [],
-            email: '', 
-            phone: '',
-            twitter: '',
-            instagram: ''
-        };
-        
-        // --- Firestore Paths ---
-        const POSTS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_posts`;
-        const USERS_COLLECTION_PATH = `artifacts/${appId}/public/data/users`;
-        const HIGHLIGHTS_COLLECTION_PATH = `artifacts/${appId}/public/data/football_highlights`; 
-        
-        // --- Utility Functions ---
-
-        /**
-         * Formats a Firebase Timestamp object into a readable string (e.g., "1 hour ago").
-         * @param {Object} firebaseTimestamp - The timestamp object from Firestore.
-         * @returns {string} The formatted relative time string.
-         */
-        function formatTimestamp(firebaseTimestamp) {
-            if (!firebaseTimestamp || !firebaseTimestamp.seconds) return 'Just now';
-            const now = Date.now();
-            const past = firebaseTimestamp.toDate().getTime();
-            const seconds = Math.floor((now - past) / 1000);
-
-            if (seconds < 60) return `${seconds}s ago`;
-            if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-            if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-            if (seconds < 2592000) return `${Math.floor(seconds / 86400)}d ago`; 
-            return firebaseTimestamp.toDate().toLocaleDateString();
-        }
-
-        // --- View Management ---
-
-        /** Switches the active application view (home, feed, highlights, or my-profile). */
-        window.switchView = function(viewName) {
-            // Updated view list
-            ['home', 'feed', 'highlights', 'my-profile'].forEach(view => {
-                const viewElement = document.getElementById(`${view}-view`);
-                if (viewElement) {
-                    viewElement.classList.toggle('hidden', view !== viewName);
-                }
-            });
-
-            // Update navigation active class for both desktop and mobile
-            document.querySelectorAll('.view-btn').forEach(btn => {
-                const isMobileFooter = !btn.closest('header');
-                const isCurrentView = btn.getAttribute('data-view') === viewName;
-
-                if (isCurrentView) {
-                    btn.classList.add('active-nav');
-                    if (isMobileFooter) {
-                        btn.classList.remove('text-gray-500');
-                        btn.classList.add('text-primary');
-                    } else {
-                        btn.classList.remove('text-gray-300');
-                        btn.classList.add('text-white');
-                    }
-                } else {
-                    btn.classList.remove('active-nav');
-                    if (isMobileFooter) {
-                         btn.classList.remove('text-primary');
-                         btn.classList.add('text-gray-500');
-                    } else {
-                        btn.classList.remove('text-white');
-                        btn.classList.add('text-gray-300');
-                    }
-                }
-            });
-            
-            // Special logic for data listeners
-            if (viewName === 'highlights') { 
-                listenToHighlights();
-            } else if (viewName === 'my-profile') {
-                renderMyProfilePage(); // Re-render the profile page on view switch
-            }
-            
-            // Re-render lucide icons AFTER potential innerHTML replacements
-            lucide.createIcons();
-        };
-
-        // --- Firebase Core Setup ---
-
-        /** Initializes Firebase app and services. */
-        function initFirebase() {
-            if (!firebaseConfig || !firebaseConfig.projectId) {
-                console.error("Firebase configuration is missing or malformed.");
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Error: Firebase configuration is malformed. Cannot load feed.</p>';
-                switchView('home'); 
-                return;
-            }
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                setupAuth();
-            } catch (error) {
-                console.error("Error initializing Firebase:", error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Error initializing Firebase. Check console for details.</p>';
-                switchView('home');
-            }
-        }
-
-        /** Handles authentication using the provided token or signs in anonymously. */
-        async function setupAuth() {
-            await setPersistence(auth, browserLocalPersistence);
-
-            if (initialAuthToken) {
-                try {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                    console.log("Signed in with custom token.");
-                } catch (error) {
-                    console.warn("Custom token sign-in failed. Falling back to anonymous sign-in:", error);
-                    await signInAnonymously(auth);
-                }
-            } else {
-                await signInAnonymously(auth);
-                console.log("Signed in anonymously.");
-            }
-
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    currentUserId = user.uid;
-                    updateUserIdDisplay(currentUserId);
-                    listenToUserProfile(currentUserId); 
-                    
-                    // Enable post button once authenticated
-                    document.getElementById('post-button').disabled = false;
-                    document.getElementById('post-content').addEventListener('input', checkPostContent);
-                    
-                    // Start listening to the feed
-                    listenToFeed();
-                } else {
-                    currentUserId = crypto.randomUUID(); // Fallback ID if auth fails unexpectedly
-                    updateUserIdDisplay(currentUserId);
-                    console.log("User logged out or state change detected.");
-                    listenToFeed();
-                }
-                // Set initial view to home after auth attempt
-                switchView('home'); 
-            });
-        }
-
-        /** Sets up a real-time listener for the current user's profile. */
-        function listenToUserProfile(userId) {
-            if (!db || !userId) return;
-            const userDocRef = doc(db, USERS_COLLECTION_PATH, userId);
-
-            onSnapshot(userDocRef, async (docSnap) => {
-                if (docSnap.exists()) {
-                    // Update global state with all profile fields, ensuring defaults if new fields are missing
-                    currentUserProfile = {
-                        ...docSnap.data(),
-                        friendList: docSnap.data().friendList || [],
-                        sentRequests: docSnap.data().sentRequests || [],
-                        receivedRequests: docSnap.data().receivedRequests || [],
-                        email: docSnap.data().email || '', 
-                        phone: docSnap.data().phone || '', 
-                        twitter: docSnap.data().twitter || '', 
-                        instagram: docSnap.data().instagram || '' 
-                    };
-                } else {
-                    // Create default profile if none exists
-                    await setDoc(userDocRef, currentUserProfile);
-                    return;
-                }
-                updateProfileUI();
-                renderPendingRequests();
-                renderMyProfilePage(); // Update the dedicated profile view
-            }, (error) => {
-                console.error("Error listening to user profile:", error);
-            });
-        }
-
-        /** Updates the profile UI elements (Sidebar and Edit Modal inputs). */
-        function updateProfileUI() {
-            const { name, position, club, email, phone, twitter, instagram } = currentUserProfile;
-            
-            // Set input values for modal (for editing)
-            document.getElementById('profile-name-input').value = name;
-            document.getElementById('profile-position-input').value = position;
-            document.getElementById('profile-club-input').value = club;
-            document.getElementById('profile-email-input').value = email;      
-            document.getElementById('profile-phone-input').value = phone;      
-            document.getElementById('profile-twitter-input').value = twitter;  
-            document.getElementById('profile-instagram-input').value = instagram; 
-
-            // Set display values for sidebar and header
-            document.getElementById('profile-name-display').textContent = name;
-            document.getElementById('profile-position-display').textContent = position;
-            document.getElementById('profile-club-display').textContent = club;
-            document.getElementById('user-greeting').textContent = `Welcome, ${name.split(' ')[0]}!`;
-
-            lucide.createIcons();
-        }
-        
-        /** Renders the new dedicated My Profile display page. */
-        function renderMyProfilePage() {
-            const { name, position, club, email, phone, twitter, instagram } = currentUserProfile;
-
-            // General Info
-            document.getElementById('profile-initials').textContent = name[0].toUpperCase();
-            document.getElementById('profile-page-name').textContent = name;
-            document.getElementById('profile-page-position').textContent = position;
-            document.getElementById('profile-page-club').textContent = club;
-
-            // Contact Details
-            document.getElementById('profile-page-email').textContent = email || 'Not set';
-            document.getElementById('profile-page-phone').textContent = phone || 'Not set';
-
-            // Social Media Details
-            const twitterEl = document.getElementById('profile-page-twitter');
-            twitterEl.textContent = twitter ? `@${twitter.replace('@', '')}` : 'Not set';
-            twitterEl.href = twitter ? `https://twitter.com/${twitter.replace('@', '')}` : '#';
-            twitterEl.classList.toggle('text-blue-600', !!twitter);
-            twitterEl.classList.toggle('text-gray-900', !twitter);
-
-            const instagramEl = document.getElementById('profile-page-instagram');
-            instagramEl.textContent = instagram ? `@${instagram.replace('@', '')}` : 'Not set';
-            instagramEl.href = instagram ? `https://instagram.com/${instagram.replace('@', '')}` : '#';
-            instagramEl.classList.toggle('text-pink-600', !!instagram);
-            instagramEl.classList.toggle('text-gray-900', !instagram);
-
-            // Friend Requests (moved from modal into the public profile page)
-            const requestsContainer = document.getElementById('profile-page-requests');
-            requestsContainer.innerHTML = '';
-            
-            const requests = currentUserProfile.receivedRequests;
-            if (requests.length === 0) {
-                 requestsContainer.innerHTML = '<p class="text-sm text-gray-500">You currently have no pending requests.</p>';
-            } else {
-                // To display names, we need a list of all users, but since we removed the global listen, we'll use placeholder text here.
-                // NOTE: This area is primarily to indicate requests exist. Actual management is still in the Edit Modal.
-                requestsContainer.innerHTML = `
-                    <p class="text-sm font-medium text-yellow-700 flex items-center">
-                        <i data-lucide="bell" class="w-4 h-4 mr-1"></i> You have ${requests.length} pending requests.
-                    </p>
-                    <p class="text-xs text-gray-500">Open the **Edit Profile** modal to view and accept them.</p>
-                `;
-            }
-            
-            // New: Fetch and Render User's Posts
-            fetchUserRecentPosts();
-
-            lucide.createIcons();
-        }
-
-        /** Fetches the current user's most recent 3 posts for the profile page. */
-        async function fetchUserRecentPosts() {
-            const container = document.getElementById('my-recent-posts');
-            if (!db || !currentUserId || !container) return;
-            
-            container.innerHTML = '<p class="text-sm text-gray-500 animate-pulse">Loading your latest updates...</p>';
-
-            try {
-                const q = query(
-                    collection(db, POSTS_COLLECTION_PATH),
-                    where('userId', '==', currentUserId),
-                    orderBy('timestamp', 'desc'),
-                    // Limit to 3 posts
-                    // Note: Firestore does not currently support `limit` in this imported version, 
-                    // so we'll fetch all and slice, which is less efficient but safe in this environment.
-                );
-
-                const querySnapshot = await getDocs(q);
-                const posts = [];
-                querySnapshot.forEach(doc => posts.push({ id: doc.id, ...doc.data() }));
-                
-                // Manually limit to top 3 since limit is not imported/available here
-                const recentPosts = posts.slice(0, 3); 
-
-                container.innerHTML = '';
-
-                if (recentPosts.length === 0) {
-                    container.innerHTML = `
-                        <div class="p-4 text-center text-gray-500 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-                            <i data-lucide="layout-list" class="w-6 h-6 mx-auto mb-1"></i>
-                            <p class="font-semibold text-sm">No recent posts.</p>
-                            <p class="text-xs">Share your first update on the Global Feed!</p>
-                        </div>
-                    `;
-                } else {
-                    recentPosts.forEach(post => {
-                        const postEl = document.createElement('div');
-                        postEl.className = 'bg-slate-50 p-4 rounded-lg border border-slate-200';
-                        postEl.innerHTML = `
-                            <p class="text-gray-800 text-sm font-medium whitespace-pre-wrap">${post.content.substring(0, 100)}...</p>
-                            ${post.postLink ? `<a href="${post.postLink}" target="_blank" class="text-xs text-green-600 hover:underline flex items-center mt-2"><i data-lucide="external-link" class="w-3 h-3 mr-1"></i> View Link</a>` : ''}
-                            <p class="text-xs text-gray-400 mt-2">${formatTimestamp(post.timestamp)}</p>
-                        `;
-                        container.appendChild(postEl);
-                    });
-                }
-                lucide.createIcons();
-
-            } catch (error) {
-                console.error("Error fetching user posts:", error);
-                container.innerHTML = '<p class="text-sm text-red-500">Failed to load recent activity.</p>';
-            }
-        }
-
-
-        /** Updates the displayed user ID. */
-        function updateUserIdDisplay(userId) {
-            const idElement = document.getElementById('user-id-display');
-            idElement.textContent = userId;
-            idElement.onclick = () => {
-                navigator.clipboard.writeText(userId).then(() => {
-                    idElement.textContent = 'Copied!';
-                    setTimeout(() => { idElement.textContent = userId; }, 1500);
-                }).catch(err => {
-                    console.error('Could not copy text: ', err);
-                    alertUser('Failed to copy ID. Check console for details.', 'error');
-                });
-            };
-        }
-        
-        // --- Feed Logic (Existing) ---
-
-        /** Sets up the real-time listener for the posts feed. */
-        function listenToFeed() {
-            if (!db) return;
-            const q = query(
-                collection(db, POSTS_COLLECTION_PATH),
-                orderBy('timestamp', 'desc')
-            );
-
-            onSnapshot(q, (snapshot) => {
-                const posts = [];
-                snapshot.forEach(doc => {
-                    posts.push({ id: doc.id, ...doc.data() });
-                });
-                renderFeed(posts);
-            }, (error) => {
-                console.error("Error listening to feed:", error);
-                document.getElementById('loading-indicator').innerHTML = '<p class="text-red-500">Error fetching feed data.</p>';
-            });
-        }
-
-        /** Renders the full list of posts to the feed container. */
-        function renderFeed(posts) {
-            const feedContainer = document.getElementById('feed-container');
-            const loadingIndicator = document.getElementById('loading-indicator');
-            feedContainer.innerHTML = '';
-            loadingIndicator.classList.add('hidden');
-
-            if (posts.length === 0) {
-                feedContainer.innerHTML = `
-                    <div class="p-8 text-center text-gray-500 bg-white rounded-xl shadow-inner border border-dashed border-slate-300">
-                        <i data-lucide="inbox" class="w-10 h-10 mx-auto mb-2"></i>
-                        <p class="font-semibold text-lg">No updates yet!</p>
-                        <p>Be the first footballer to share your journey.</p>
-                    </div>
-                `;
-            } else {
-                posts.forEach(post => {
-                    const postElement = createPostElement(post);
-                    feedContainer.appendChild(postElement);
-                });
-            }
-            lucide.createIcons(); // Ensure all new icons are rendered
-        }
-
-        /** Creates the HTML element for a single post. */
-        function createPostElement(post) {
-            const { id, username, position, club, content, timestamp, userId, likes = [], postLink } = post;
-            const liked = likes.includes(currentUserId);
-            const timeAgo = formatTimestamp(timestamp);
-
-            // New: Generate link element if postLink exists
-            let linkElement = '';
-            if (postLink) {
-                linkElement = `
-                    <a href="${postLink}" target="_blank" class="block mt-3 p-3 bg-slate-100 rounded-lg hover:bg-slate-200 transition duration-150 border border-slate-200">
-                        <i data-lucide="external-link" class="w-4 h-4 inline mr-2 text-green-600"></i>
-                        <span class="text-sm font-medium text-gray-700 truncate">${postLink}</span>
-                    </a>
-                `;
-            }
-
-            const postCard = document.createElement('div');
-            postCard.className = 'bg-white p-4 sm:p-6 rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition duration-300';
-            postCard.innerHTML = `
-                <!-- Post Header -->
-                <div class="flex items-start mb-4">
-                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4 text-green-700 font-bold text-xl border-2 border-green-300">
-                        ${username[0].toUpperCase()}
-                    </div>
-                    <div>
-                        <p class="font-bold text-gray-900">${username}</p>
-                        <p class="text-xs text-gray-500">${position} | ${club}</p>
-                        <p class="text-xs text-gray-400 mt-0.5">${timeAgo}</p>
-                    </div>
-                </div>
-
-                <!-- Post Content -->
-                <p class="text-gray-800 mb-4 whitespace-pre-wrap">${content}</p>
-
-                ${linkElement} <!-- Insert optional link -->
-
-                <!-- Post Footer (Actions) -->
-                <div class="flex items-center justify-between border-t border-slate-100 pt-3 mt-3">
-                    <button data-post-id="${id}" onclick="handleLike(this)"
-                        class="flex items-center space-x-2 text-sm font-semibold p-2 rounded-full transition duration-200 
-                        ${liked ? 'text-red-500 hover:bg-red-50' : 'text-gray-500 hover:text-green-700 hover:bg-green-50'}">
-                        <i data-lucide="${liked ? 'heart' : 'heart'}" class="${liked ? 'fill-red-500' : 'stroke-gray-500'} w-5 h-5 transition duration-200"></i>
-                        <span>${likes.length} ${likes.length === 1 ? 'Like' : 'Likes'}</span>
-                    </button>
-                    
-                    <span class="text-xs text-slate-400">User ID: ${userId.substring(0, 8)}...</span>
-                </div>
-            `;
-            return postCard;
-        }
-        
-        // --- Highlights Logic (Existing) ---
-        // (Highlight functions remain unchanged as they were not related to chat/DM removal)
-
-        // NEW: Update file input label text on change
-        document.addEventListener('DOMContentLoaded', () => {
-            const fileInput = document.getElementById('highlight-file');
-            if (fileInput) {
-                fileInput.addEventListener('change', function() {
-                    const label = document.getElementById('file-upload-label');
-                    if (this.files.length > 0) {
-                        label.textContent = `Selected: ${this.files[0].name}`;
-                    } else {
-                        label.textContent = 'Select a video file from your device (Max 60s simulated)';
-                    }
-                });
-            }
-        });
-        
-        /** Sets up the real-time listener for the highlights feed. */
-        function listenToHighlights() {
-            if (!db) return;
-            
-            const highlightsLoading = document.getElementById('highlights-loading');
-            if(highlightsLoading) highlightsLoading.classList.remove('hidden');
-
-            const q = query(
-                collection(db, HIGHLIGHTS_COLLECTION_PATH),
-                orderBy('timestamp', 'desc')
-            );
-
-            onSnapshot(q, (snapshot) => {
-                const highlights = [];
-                snapshot.forEach(doc => {
-                    highlights.push({ id: doc.id, ...doc.data() });
-                });
-                renderHighlights(highlights);
-            }, (error) => {
-                console.error("Error listening to highlights:", error);
-                if(highlightsLoading) {
-                    highlightsLoading.innerHTML = '<p class="text-red-500">Error fetching highlights data.</p>';
-                }
-            });
-        }
-
-        /** Renders the full list of highlights to the container. */
-        function renderHighlights(highlights) {
-            const highlightsContainer = document.getElementById('highlights-container');
-            const highlightsLoading = document.getElementById('highlights-loading');
-
-            if (!highlightsContainer) return;
-            
-            highlightsContainer.innerHTML = '';
-            if(highlightsLoading) highlightsLoading.classList.add('hidden');
-
-            if (highlights.length === 0) {
-                highlightsContainer.innerHTML = `
-                    <div class="col-span-full p-8 text-center text-gray-500 bg-white rounded-xl shadow-inner border border-dashed border-slate-300">
-                        <i data-lucide="video" class="w-10 h-10 mx-auto mb-2"></i>
-                        <p class="font-semibold text-lg">No highlights posted yet!</p>
-                        <p>Share your clips above to get scouted.</p>
-                    </div>
-                `;
-            } else {
-                highlights.forEach(highlight => {
-                    const highlightElement = createHighlightElement(highlight);
-                    highlightsContainer.appendChild(highlightElement);
-                });
-            }
-            lucide.createIcons();
-        }
-
-        /** Creates the HTML element for a single highlight card. */
-        function createHighlightElement(highlight) {
-            const { videoUrl, username, position, timestamp, title } = highlight; 
-            const timeAgo = formatTimestamp(timestamp);
-
-            const card = document.createElement('a');
-            card.href = videoUrl;
-            card.target = "_blank";
-            card.className = 'highlight-card rounded-xl shadow-xl flex flex-col justify-end p-3 relative overflow-hidden bg-gray-900 group cursor-pointer border-2 border-transparent hover:border-primary transition duration-300';
-            
-            // Simple visual placeholder for the video content
-            card.style.backgroundImage = 'url(https://placehold.co/400x700/16a34a/ffffff?text=VIDEO)';
-            card.style.backgroundSize = 'cover';
-            card.style.backgroundPosition = 'center';
-
-            card.innerHTML = `
-                <div class="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-50 transition duration-300 flex items-center justify-center">
-                    <i data-lucide="play-circle" class="w-12 h-12 text-white opacity-80 group-hover:opacity-100 transition duration-300"></i>
-                </div>
-                <div class="z-10 bg-gradient-to-t from-black/80 to-transparent pt-8 text-white p-2">
-                    <p class="font-bold truncate">${title}</p> 
-                    <p class="text-xs text-green-300">${username} | ${position}</p> 
-                    <p class="text-[10px] text-gray-400 mt-1">${timeAgo}</p>
-                </div>
-            `;
-            return card;
-        }
-
-        /** Handles the submission of a new highlight link/file (UPDATED LOGIC). */
-        window.handleHighlightPost = async function() {
-            if (!currentUserId || !db) return;
-            
-            const urlInput = document.getElementById('highlight-url');
-            const fileInput = document.getElementById('highlight-file'); 
-            const errorElement = document.getElementById('highlight-error');
-            const postButton = document.getElementById('highlight-post-button');
-            
-            const videoUrl = urlInput.value.trim();
-            const videoFile = fileInput.files.length > 0 ? fileInput.files[0] : null;
-
-            let finalUrl = null;
-            let title = null;
-
-            if (videoFile) {
-                // --- Simulation of File Upload ---
-                if (!videoFile.type.startsWith('video/')) {
-                    errorElement.textContent = "Please select a valid video file.";
-                    errorElement.classList.remove('hidden');
-                    return;
-                }
-                
-                // Simulate successful upload to storage and fetching a URL
-                finalUrl = `https://placehold.co/400x700/16a34a/ffffff?text=FILE+UPLOADED`;
-                title = `Uploaded Clip: ${videoFile.name}`;
-                
-                // Clear file input state after "upload" simulation
-                fileInput.value = '';
-                document.getElementById('file-upload-label').textContent = 'Select a video file from your device (Max 60s simulated)';
-
-            } else if (videoUrl && videoUrl.startsWith('http')) {
-                // --- External URL Submission (Existing Logic) ---
-                finalUrl = videoUrl;
-                title = `External Link`; // Use a generic title for links
-                urlInput.value = ''; // Clear input on success
-            } else {
-                // --- Error Case ---
-                errorElement.textContent = "Please provide a video file or a public link.";
-                errorElement.classList.remove('hidden');
-                return;
-            }
-            
-            errorElement.classList.add('hidden');
-            postButton.disabled = true;
-            postButton.textContent = 'Sharing...';
-
-            const highlightData = {
-                userId: currentUserId,
-                username: currentUserProfile.name,
-                position: currentUserProfile.position,
-                club: currentUserProfile.club,
-                videoUrl: finalUrl, 
-                title: title, 
-                timestamp: serverTimestamp()
-            };
-
-            try {
-                await addDoc(collection(db, HIGHLIGHTS_COLLECTION_PATH), highlightData);
-                alertUser("Highlight shared successfully!", "success");
-            } catch (error) {
-                console.error("Error adding highlight:", error);
-                alertUser("Failed to share highlight.", "error");
-            } finally {
-                postButton.disabled = false;
-                postButton.textContent = 'Share Highlight';
-            }
-        };
-
-        // --- General Event Handlers (Existing) ---
-        
-        /** Validates if post content is available to enable the button. */
-        function checkPostContent() {
-            const content = document.getElementById('post-content').value.trim();
-            document.getElementById('post-button').disabled = content.length === 0;
-        }
-
-        /** Handles the creation of a new post. */
-        window.handlePost = async function() {
-            const contentInput = document.getElementById('post-content');
-            const linkInput = document.getElementById('post-link-input'); // NEW
-            
-            const content = contentInput.value.trim();
-            const postLink = linkInput.value.trim(); // NEW
-            
-            if (!content || !currentUserId || !db) return;
-
-            document.getElementById('post-button').disabled = true;
-
-            const postData = {
-                userId: currentUserId,
-                username: currentUserProfile.name,
-                position: currentUserProfile.position,
-                club: currentUserProfile.club,
-                content: content,
-                timestamp: serverTimestamp(),
-                likes: [],
-                postLink: postLink // NEW: Add optional link
-            };
-
-            try {
-                await addDoc(collection(db, POSTS_COLLECTION_PATH), postData);
-                contentInput.value = ''; // Clear content
-                linkInput.value = ''; // Clear link
-                checkPostContent();
-            } catch (error) {
-                console.error("Error adding document: ", error);
-                document.getElementById('post-button').disabled = false;
-                alertUser("Failed to post update. Check connection and console.", "error");
-            }
-        };
-
-        /** Toggles the like status of a post. */
-        window.handleLike = async function(buttonElement) {
-            if (!currentUserId || !db) return;
-            const postId = buttonElement.getAttribute('data-post-id');
-            const postDocRef = doc(db, POSTS_COLLECTION_PATH, postId);
-            
-            try {
-                const docSnap = await getDoc(postDocRef);
-                if (!docSnap.exists()) return;
-                
-                const postData = docSnap.data();
-                const likes = postData.likes || [];
-                
-                if (likes.includes(currentUserId)) {
-                    // Unlike
-                    await updateDoc(postDocRef, {
-                        likes: arrayRemove(currentUserId)
-                    });
-                } else {
-                    // Like
-                    await updateDoc(postDocRef, {
-                        likes: arrayUnion(currentUserId)
-                    });
-                }
-            } catch (error) {
-                console.error("Error toggling like:", error);
-            }
-        };
-
-        /** Handles saving the profile form data. */
-        document.getElementById('profile-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!currentUserId || !db) return;
-
-            // UPDATED: Use new default placeholders
-            const newName = document.getElementById('profile-name-input').value.trim() || 'Unknown Player';
-            const newPosition = document.getElementById('profile-position-input').value;
-            const newClub = document.getElementById('profile-club-input').value.trim() || 'Unknown Club/Location';
-            
-            const newEmail = document.getElementById('profile-email-input').value.trim();
-            const newPhone = document.getElementById('profile-phone-input').value.trim();
-            const newTwitter = document.getElementById('profile-twitter-input').value.trim().replace('@', '');
-            const newInstagram = document.getElementById('profile-instagram-input').value.trim().replace('@', '');
-            
-            const newProfile = {
-                ...currentUserProfile, // Keep friend lists intact
-                name: newName,
-                position: newPosition,
-                club: newClub,
-                email: newEmail,      
-                phone: newPhone,      
-                twitter: newTwitter,  
-                instagram: newInstagram 
-            };
-
-            const userDocRef = doc(db, USERS_COLLECTION_PATH, currentUserId);
-            
-            try {
-                // Update profile in Firestore
-                await setDoc(userDocRef, newProfile, { merge: true });
-                updateProfileUI(); 
-
-                // Close modal
-                document.getElementById('profile-modal').classList.add('hidden');
-                alertUser("Profile updated successfully! New posts will use this profile.", "success");
-            } catch (error) {
-                console.error("Error saving profile:", error);
-                alertUser("Failed to save profile. Please try again.", "error");
-            }
-        });
-
-        // --- Friend System Logic (Existing) ---
-        
-        /** Renders the list of received friend requests in the profile modal. */
-        function renderPendingRequests() {
-            // Note: This function is simplified as the global 'allUsers' list is removed.
-            // It relies only on the IDs in currentUserProfile.receivedRequests.
-            const container = document.getElementById('pending-requests-list');
-            const profileRequestsContainer = document.getElementById('profile-page-requests');
-
-            if (!container || !profileRequestsContainer) return;
-            
-            const requests = currentUserProfile.receivedRequests;
-            container.innerHTML = ''; // Clear modal list
-            
-            // 1. Update Profile Page status
-            if (requests.length === 0) {
-                 profileRequestsContainer.innerHTML = '<p class="text-sm text-gray-500">You currently have no pending requests.</p>';
-            } else {
-                 profileRequestsContainer.innerHTML = `
-                    <p class="text-sm font-medium text-yellow-700 flex items-center">
-                        <i data-lucide="bell" class="w-4 h-4 mr-1"></i> You have ${requests.length} pending requests.
-                    </p>
-                    <p class="text-xs text-gray-500">Open the **Edit Profile** modal to view and accept them.</p>
-                `;
-            }
-
-            // 2. Render Modal list (Requires fetching sender data if needed, but we'll use IDs/placeholders for simplicity)
-            if (requests.length === 0) {
-                 container.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">No pending requests.</p>';
-            } else {
-                // For a good UX, we should fetch user names here, but to avoid multiple document reads (and since we removed the global list), 
-                // we'll display the user ID and rely on the acceptance function to work.
-                requests.forEach(senderId => {
-                    const item = document.createElement('div');
-                    item.className = 'flex justify-between items-center p-2 bg-yellow-50 rounded-lg border border-yellow-200';
-                    item.innerHTML = `
-                        <div>
-                            <p class="font-semibold text-gray-800">Request from User</p>
-                            <p class="text-xs text-gray-500">ID: ${senderId.substring(0, 12)}...</p>
-                        </div>
-                        <button onclick="acceptFriendRequest('${senderId}')" class="bg-green-600 text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-green-700 transition duration-150">
-                            Accept
-                        </button>
-                    `;
-                    container.appendChild(item);
-                });
-            }
-            lucide.createIcons();
-        }
-
-        /** Searches user profiles by name using prefix matching. */
-        window.searchUsers = async function() {
-            if (!db) return;
-            
-            const searchInput = document.getElementById('user-search-input');
-            const resultsContainer = document.getElementById('user-search-results');
-            const searchTerm = searchInput.value.trim();
-
-            resultsContainer.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">Searching...</p>';
-            
-            if (searchTerm.length < 2) {
-                resultsContainer.innerHTML = '<p class="text-sm text-red-500 text-center py-2">Please enter at least 2 characters.</p>';
-                return;
-            }
-
-            try {
-                const q = query(
-                    collection(db, USERS_COLLECTION_PATH),
-                    where('name', '>=', searchTerm),
-                    where('name', '<=', searchTerm + '\uf8ff')
-                );
-
-                const querySnapshot = await getDocs(q);
-                const results = [];
-                querySnapshot.forEach(doc => {
-                    const user = { id: doc.id, ...doc.data() };
-                    if (user.id !== currentUserId) { // Don't show current user
-                        results.push(user);
-                    }
-                });
-                renderSearchResults(results);
-
-            } catch (error) {
-                console.error("Error searching users:", error);
-                resultsContainer.innerHTML = '<p class="text-sm text-red-500 text-center py-2">An error occurred during search.</p>';
-            }
-        };
-
-        /** Renders the results of the user search. */
-        function renderSearchResults(users) {
-            const container = document.getElementById('user-search-results');
-            container.innerHTML = '';
-
-            if (users.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">No players found matching your search.</p>';
-                return;
-            }
-
-            users.forEach(user => {
-                const isFriend = currentUserProfile.friendList.includes(user.id);
-                const requestSent = currentUserProfile.sentRequests.includes(user.id);
-                const requestReceived = currentUserProfile.receivedRequests.includes(user.id);
-
-                let buttonHtml = '';
-                if (isFriend) {
-                    buttonHtml = `<span class="text-xs text-green-600 font-semibold py-1 px-3">Friends</span>`;
-                } else if (requestReceived) {
-                    // This logic is already correct, showing 'Accept' if the search result has sent a request to the current user
-                    buttonHtml = `<button onclick="acceptFriendRequest('${user.id}')" class="bg-yellow-500 text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-yellow-600">Accept</button>`;
-                } else if (requestSent) {
-                    buttonHtml = `<span class="text-xs text-slate-500 py-1 px-3">Pending</span>`;
-                } else {
-                    // This logic is already correct, showing 'Add Friend' otherwise
-                    buttonHtml = `<button onclick="sendFriendRequest('${user.id}')" class="bg-primary text-white text-xs font-semibold py-1 px-3 rounded-full hover:bg-gray-700">Add Friend</button>`;
-                }
-                
-                const item = document.createElement('div');
-                item.className = 'flex justify-between items-center p-2 bg-slate-50 rounded-lg border border-slate-200 hover:bg-slate-100 transition duration-150';
-                item.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="w-8 h-8 bg-green-200 rounded-full flex items-center justify-center mr-2 text-green-800 font-bold text-sm">
-                            ${user.name[0].toUpperCase()}
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800">${user.name}</p>
-                            <p class="text-xs text-gray-500">${user.position} | ${user.club}</p>
-                        </div>
-                    </div>
-                    <div class="flex space-x-2">
-                        ${buttonHtml}
-                    </div>
-                `;
-                container.appendChild(item);
-            });
-            lucide.createIcons();
-        }
-
-        /** Sends a friend request to a target user. */
-        window.sendFriendRequest = async function(targetUserId) {
-            if (!db || !currentUserId || targetUserId === currentUserId) return;
-
-            const myDocRef = doc(db, USERS_COLLECTION_PATH, currentUserId);
-            const targetDocRef = doc(db, USERS_COLLECTION_PATH, targetUserId);
-
-            try {
-                // 1. Add targetUserId to my sentRequests list
-                await updateDoc(myDocRef, {
-                    sentRequests: arrayUnion(targetUserId)
-                });
-
-                // 2. Add myUserId to target's receivedRequests list
-                await updateDoc(targetDocRef, {
-                    receivedRequests: arrayUnion(currentUserId)
-                });
-
-                alertUser(`Friend request sent to ${targetUserId.substring(0, 8)}...`, "success");
-                // Refresh search results to show "Pending" status
-                searchUsers(); 
-
-            } catch (error) {
-                console.error("Error sending friend request:", error);
-                alertUser("Failed to send friend request.", "error");
-            }
-        };
-
-        /** Accepts a friend request from a sender user. */
-        window.acceptFriendRequest = async function(senderId) {
-            if (!db || !currentUserId || senderId === currentUserId) return;
-
-            const myDocRef = doc(db, USERS_COLLECTION_PATH, currentUserId);
-            const senderDocRef = doc(db, USERS_COLLECTION_PATH, senderId);
-
-            try {
-                // 1. Remove senderId from my receivedRequests and add to my friendList
-                await updateDoc(myDocRef, {
-                    receivedRequests: arrayRemove(senderId),
-                    friendList: arrayUnion(senderId)
-                });
-                
-                // 2. Remove myUserId from sender's sentRequests and add to sender's friendList
-                await updateDoc(senderDocRef, {
-                    sentRequests: arrayRemove(currentUserId),
-                    friendList: arrayUnion(currentUserId)
-                });
-
-                alertUser(`Friend request from ${senderId.substring(0, 8)}... accepted!`, "success");
-                // Re-render UI elements that show status
-                renderPendingRequests();
-                searchUsers(); // Update search if open
-
-            } catch (error) {
-                console.error("Error accepting friend request:", error);
-                alertUser("Failed to accept friend request.", "error");
-            }
-        };
-        
-        // --- Custom Modal Functions (Replaces native browser functions) ---
-        let currentConfirmationAction = null; // Removed since confirmation modal is gone, but keeping structure for completeness
-
-        // Removed showConfirmationModal, closeConfirmationModal
-
-        /** Simple custom alert/message box function (replaces browser alert()). */
-        function alertUser(message, type = 'info') {
-            console.log(`[Message: ${type.toUpperCase()}] ${message}`);
-
-            const alertBox = document.createElement('div');
-            
-            const baseClasses = 'fixed top-4 right-4 z-50 p-4 rounded-lg shadow-xl text-white font-semibold transition-transform duration-500 transform translate-y-0';
-            let typeClasses = 'bg-slate-700'; // Default neutral dark background
-
-            if (type === 'success') {
-                typeClasses = 'bg-green-600';
-            } else if (type === 'error') {
-                typeClasses = 'bg-red-600';
-            }
-
-            alertBox.className = `${baseClasses} ${typeClasses}`;
-            alertBox.textContent = message;
-
-            document.body.appendChild(alertBox);
-
-            setTimeout(() => {
-                alertBox.classList.add('translate-y-[-100%]', 'opacity-0');
-                alertBox.addEventListener('transitionend', () => alertBox.remove());
-            }, 3000);
-        }
-
-        // --- Initialization ---
-        window.onload = initFirebase;
-        
-    </script>
 </body>
 </html>
