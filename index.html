@@ -100,11 +100,99 @@
         .home-content {
             z-index: 2;
         }
+        .user-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body class="min-h-screen">
 
-    <div id="app" class="flex flex-col min-h-screen">
+    <!-- Login/Register Screen -->
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="home-video-container">
+            <div class="home-video">
+                <div class="home-overlay"></div>
+            </div>
+        </div>
+        
+        <div class="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+            <div class="text-center mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-16 h-16 mx-auto mb-4">
+                    <circle cx="12" cy="12" r="10" fill="#16a34a" stroke="#1f2937" stroke-width="1.5"/>
+                    <path d="M12 2v20 M2 12h20" stroke="#1f2937" stroke-width="1.5"/>
+                    <circle cx="12" cy="12" r="5" stroke="#1f2937" stroke-width="1.5" fill="none"/>
+                    <circle cx="12" cy="12" r="1.5" fill="#1f2937"/>
+                </svg>
+                <h1 class="text-3xl font-extrabold text-gray-900">U.Scout</h1>
+                <p class="text-gray-600 mt-2">The Global Football Network</p>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-form">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Welcome Back</h2>
+                <form onsubmit="handleLogin(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="login-email" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="login-password" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-full hover:bg-green-700 transition duration-200">
+                        Log In
+                    </button>
+                </form>
+                <p class="text-center mt-4 text-sm text-gray-600">
+                    Don't have an account? 
+                    <button onclick="showRegisterForm()" class="text-green-600 font-semibold hover:text-green-700">Create Account</button>
+                </p>
+            </div>
+
+            <!-- Register Form -->
+            <div id="register-form" class="hidden">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Create Account</h2>
+                <form onsubmit="handleRegister(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
+                        <input type="text" id="register-name" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" id="register-email" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password (min 6 characters)</label>
+                        <input type="password" id="register-password" required minlength="6" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    </div>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Position</label>
+                        <select id="register-position" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                            <option value="">Select Position</option>
+                            <option value="Goalkeeper">Goalkeeper</option>
+                            <option value="Defender">Defender</option>
+                            <option value="Midfielder">Midfielder</option>
+                            <option value="Forward">Forward</option>
+                            <option value="Coach/Staff">Coach/Staff</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-full hover:bg-green-700 transition duration-200">
+                        Create Account
+                    </button>
+                </form>
+                <p class="text-center mt-4 text-sm text-gray-600">
+                    Already have an account? 
+                    <button onclick="showLoginForm()" class="text-green-600 font-semibold hover:text-green-700">Log In</button>
+                </p>
+            </div>
+            
+            <div id="auth-error" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600"></div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="flex flex-col min-h-screen hidden">
         
         <header class="primary-color shadow-lg p-4 sticky top-0 z-20">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
@@ -123,6 +211,9 @@
                     <button onclick="openProfileModal()" class="bg-white text-gray-800 hover:bg-gray-200 px-3 py-1 rounded-full text-xs font-semibold shadow transition duration-150">
                         <i data-lucide="user" class="w-4 h-4 inline mr-1 text-green-600"></i> Profile
                     </button>
+                    <button onclick="handleLogout()" class="bg-red-600 text-white hover:bg-red-700 px-3 py-1 rounded-full text-xs font-semibold shadow transition duration-150">
+                        <i data-lucide="log-out" class="w-4 h-4 inline mr-1"></i> Logout
+                    </button>
                 </div>
             </div>
             
@@ -131,7 +222,10 @@
                     <i data-lucide="home" class="w-5 h-5 mr-2"></i> Home
                 </button>
                 <button data-view="feed" onclick="switchView('feed')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
-                    <i data-lucide="layout-list" class="w-5 h-5 mr-2"></i> Global Feed
+                    <i data-lucide="layout-list" class="w-5 h-5 mr-2"></i> Feed
+                </button>
+                <button data-view="discover" onclick="switchView('discover')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
+                    <i data-lucide="users" class="w-5 h-5 mr-2"></i> Discover
                 </button>
                 <button data-view="highlights" onclick="switchView('highlights')" class="view-btn flex-1 py-2 text-gray-300 hover:bg-gray-700 font-semibold transition duration-150 flex items-center justify-center">
                     <i data-lucide="camera" class="w-5 h-5 mr-2"></i> Highlights
@@ -155,10 +249,10 @@
                         <span class="text-primary">U.Scout</span>: The Global Football Network
                     </h1>
                     <p class="text-lg md:text-xl text-gray-300 mb-8 font-medium">
-                        Connect with players, showcase your talent, and get noticed by scouts worldwide. Your next big career move starts here.
+                        Connect with players, showcase your talent, and get noticed by scouts worldwide.
                     </p>
                     <button onclick="switchView('feed')" class="bg-green-600 text-white font-bold text-lg py-3 px-8 rounded-full shadow-lg hover:bg-green-700 transition duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50">
-                        <i data-lucide="arrow-right" class="w-5 h-5 inline mr-2"></i> Join the Feed
+                        <i data-lucide="arrow-right" class="w-5 h-5 inline mr-2"></i> Explore the Feed
                     </button>
                 </div>
             </div>
@@ -169,7 +263,7 @@
                     <div class="hidden md:block md:w-1/4">
                         <div id="user-info-card" class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 sticky top-20">
                             <h3 class="text-lg font-bold mb-2 text-gray-800 flex items-center">
-                                <i data-lucide="user-check" class="w-5 h-5 mr-2 text-green-600"></i> Player Hub
+                                <i data-lucide="user-check" class="w-5 h-5 mr-2 text-green-600"></i> My Profile
                             </h3>
                             <div class="space-y-3">
                                 <div>
@@ -185,19 +279,22 @@
                                     <p id="profile-club-display" class="text-sm text-gray-700">...</p>
                                 </div>
                                 
-                                <div id="profile-contact-display" class="pt-2 border-t mt-4 space-y-2">
-                                    <p class="text-xs font-bold text-gray-500">Contact</p>
-                                    <p id="profile-phone-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="phone" class="w-4 h-4 mr-1 text-green-600"></i><span id="phone-text"></span></p>
-                                    <p id="profile-email-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="mail" class="w-4 h-4 mr-1 text-green-600"></i><span id="email-text"></span></p>
-                                </div>
-                                <div id="profile-social-display" class="pt-2 border-t mt-4 space-y-2">
-                                    <p class="text-xs font-bold text-gray-500">Social Media</p>
-                                    <p id="profile-instagram-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="instagram" class="w-4 h-4 mr-1 text-green-600"></i><span id="instagram-text"></span></p>
-                                    <p id="profile-twitter-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="twitter" class="w-4 h-4 mr-1 text-green-600"></i><span id="twitter-text"></span></p>
+                                <div class="pt-2 border-t mt-4">
+                                    <p class="text-xs text-gray-500 mb-2">Network</p>
+                                    <div class="flex gap-4 text-sm">
+                                        <div class="cursor-pointer hover:text-green-600" onclick="showFollowersModal()">
+                                            <span id="followers-count" class="font-bold">0</span>
+                                            <span class="text-gray-600"> Followers</span>
+                                        </div>
+                                        <div class="cursor-pointer hover:text-green-600" onclick="showFollowingModal()">
+                                            <span id="following-count" class="font-bold">0</span>
+                                            <span class="text-gray-600"> Following</span>
+                                        </div>
+                                    </div>
                                 </div>
                                 
                                 <div class="pt-2 border-t mt-4">
-                                    <p class="text-xs text-gray-500">Global User ID (Share to Connect)</p>
+                                    <p class="text-xs text-gray-500">User ID</p>
                                     <code id="user-id-display" class="text-xs break-all bg-slate-100 p-1 rounded font-mono text-primary cursor-pointer" title="Click to Copy">Loading...</code>
                                 </div>
                             </div>
@@ -209,7 +306,7 @@
                             <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
                                 <i data-lucide="pen-tool" class="w-5 h-5 mr-2"></i> Share Your Update
                             </h2>
-                            <textarea id="post-content" rows="3" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 resize-none text-gray-700" placeholder="What's happening on the pitch or off it? Share your thoughts, training updates, or insights..."></textarea>
+                            <textarea id="post-content" rows="3" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 resize-none text-gray-700" placeholder="What's happening on the pitch or off it?"></textarea>
                             <div class="flex justify-end mt-3">
                                 <button id="post-button" onclick="handlePost()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-green-700 transition duration-150 disabled:bg-green-300 disabled:cursor-not-allowed" disabled>
                                     Post Update
@@ -219,33 +316,45 @@
 
                         <div id="loading-indicator" class="text-center p-8 text-gray-500">
                             <div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-primary border-t-transparent rounded-full mb-2"></div>
-                            <p>Loading the U.Scout Feed...</p>
+                            <p>Loading Feed...</p>
                         </div>
 
-                        <div id="feed-container" class="space-y-6">
-                        </div>
+                        <div id="feed-container" class="space-y-6"></div>
                     </div>
                 </div>
             </div>
 
+            <!-- Discover View -->
+            <div id="discover-view" class="view-container hidden">
+                <h1 class="text-3xl font-extrabold text-primary mb-6 border-b pb-2">Discover Players</h1>
+                <p class="text-gray-600 mb-6">Connect with players from around the world and grow your network!</p>
+                
+                <div id="discover-loading" class="text-center p-8 text-gray-500">
+                    <div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-primary border-t-transparent rounded-full mb-2"></div>
+                    <p>Loading players...</p>
+                </div>
+
+                <div id="discover-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+            </div>
+
             <div id="highlights-view" class="view-container hidden">
-                <h1 class="text-3xl font-extrabold text-primary mb-6 border-b pb-2">Top Player Highlights (Reels)</h1>
-                <p class="text-lg text-gray-600 mb-8">Upload your best skills, goals, and training clips to get seen by the community!</p>
+                <h1 class="text-3xl font-extrabold text-primary mb-6 border-b pb-2">Player Highlights</h1>
+                <p class="text-lg text-gray-600 mb-8">Upload your best clips to showcase your talent!</p>
                 
                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-slate-200">
                     <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
-                        <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i> Submit Your Best Highlight
+                        <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i> Share Your Highlight
                     </h2>
                     
                     <label for="highlight-file" class="block w-full text-center py-4 border-2 border-dashed border-green-300 rounded-lg cursor-pointer bg-green-50 hover:bg-green-100 transition duration-150 mb-4">
                         <i data-lucide="video" class="w-6 h-6 mx-auto mb-1 text-primary"></i>
-                        <span id="file-upload-label" class="text-sm font-semibold text-gray-700">Select a video file from your device</span>
+                        <span id="file-upload-label" class="text-sm font-semibold text-gray-700">Select a video file</span>
                     </label>
                     <input type="file" id="highlight-file" accept="video/mp4,video/quicktime,video/webm" class="hidden">
                     
                     <div class="text-center text-sm text-gray-500 mb-4">-- OR --</div>
                     
-                    <input type="url" id="highlight-url" placeholder="Paste a public video link (e.g., YouTube) to share your skills..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700 mb-2">
+                    <input type="url" id="highlight-url" placeholder="Paste a video link (YouTube, etc.)" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700 mb-2">
                     
                     <input type="text" id="highlight-title" placeholder="Give your highlight a title..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700">
                     
@@ -254,7 +363,7 @@
                             Share Highlight
                         </button>
                     </div>
-                    <p id="highlight-error" class="text-sm text-red-500 mt-2 hidden">Please provide a video file or a public link.</p>
+                    <p id="highlight-error" class="text-sm text-red-500 mt-2 hidden">Please provide a video file or link.</p>
                 </div>
 
                 <div id="highlights-container" class="highlight-grid">
@@ -269,7 +378,6 @@
                 <div class="flex h-[80vh] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
                     
                     <div id="chat-list" class="w-full md:w-1/3 border-r border-slate-200 p-4 space-y-4 overflow-y-auto">
-                        
                         <h2 class="text-xl font-bold text-gray-800 flex items-center">
                             <i data-lucide="messages-square" class="w-5 h-5 mr-2 text-primary"></i> Channels
                         </h2>
@@ -278,26 +386,17 @@
                             <p class="font-semibold text-primary">Global Team Chat</p>
                             <p class="text-xs text-gray-500 truncate">Connect with players worldwide...</p>
                         </div>
-                        
-                        <h3 class="text-sm font-bold text-gray-500 mt-6 border-t pt-4">Direct Messages</h3>
-                        <div id="dm-list-container" class="space-y-2">
-                            <div id="dm-list-loading" class="text-xs text-gray-400 text-center py-2">Loading users...</div>
-                        </div>
                     </div>
                     
                     <div id="chat-room-container" class="w-full md:w-2/3 flex flex-col hidden md:flex">
-                        
                         <div id="chat-room-header" class="p-4 border-b border-slate-200 bg-slate-50 flex items-center">
-                            <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
-                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                            </button>
                             <h3 id="chat-room-title" class="text-lg font-bold text-gray-800">Select a Chat</h3>
                         </div>
                         
-                        <div id="messages-container" class="flex-grow p-4 space-y-3 overflow-y-auto custom-scrollbar">
+                        <div id="messages-container" class="flex-grow p-4 space-y-3 overflow-y-auto">
                             <div id="chat-placeholder" class="text-center text-gray-500 mt-20">
                                 <i data-lucide="sparkles" class="w-8 h-8 mx-auto mb-2"></i>
-                                <p>Start a conversation in a global channel or DM a player!</p>
+                                <p>Start a conversation!</p>
                             </div>
                         </div>
                         
@@ -325,6 +424,10 @@
                     <i data-lucide="layout-list" class="w-6 h-6"></i>
                     <span class="text-xs font-medium mt-1">Feed</span>
                 </button>
+                <button data-view="discover" onclick="switchView('discover')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
+                    <i data-lucide="users" class="w-6 h-6"></i>
+                    <span class="text-xs font-medium mt-1">Discover</span>
+                </button>
                 <button data-view="highlights" onclick="switchView('highlights')" class="view-btn flex flex-col items-center p-3 text-gray-500 hover:text-primary">
                     <i data-lucide="camera" class="w-6 h-6"></i>
                     <span class="text-xs font-medium mt-1">Highlights</span>
@@ -338,16 +441,17 @@
 
     </div>
 
+    <!-- Profile Modal -->
     <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
-            <h3 class="text-xl font-bold mb-4 text-primary">Edit Player Profile</h3>
+            <h3 class="text-xl font-bold mb-4 text-primary">Edit Profile</h3>
             <form id="profile-form">
                 <div class="mb-4">
-                    <label for="profile-name-input" class="block text-sm font-medium text-gray-700 mb-1">Full Name / Nickname</label>
+                    <label for="profile-name-input" class="block text-sm font-medium text-gray-700 mb-1">Player Name</label>
                     <input type="text" id="profile-name-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
                 </div>
                 <div class="mb-4">
-                    <label for="profile-position-input" class="block text-sm font-medium text-gray-700 mb-1">Playing Position</label>
+                    <label for="profile-position-input" class="block text-sm font-medium text-gray-700 mb-1">Position</label>
                     <select id="profile-position-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
                         <option value="Unspecified">Select Position</option>
                         <option value="Goalkeeper">Goalkeeper</option>
@@ -358,34 +462,8 @@
                     </select>
                 </div>
                 <div class="mb-6">
-                    <label for="profile-club-input" class="block text-sm font-medium text-gray-700 mb-1">Current Club / Country</label>
+                    <label for="profile-club-input" class="block text-sm font-medium text-gray-700 mb-1">Club / Country</label>
                     <input type="text" id="profile-club-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                </div>
-                
-                <h4 class="text-md font-bold mb-3 text-primary border-t pt-4">Contact Info (For Scouts)</h4>
-                <div class="mb-4">
-                    <label for="profile-phone-input" class="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
-                    <input type="tel" id="profile-phone-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="+123 456 7890">
-                </div>
-                <div class="mb-6">
-                    <label for="profile-email-input" class="block text-sm font-medium text-gray-700 mb-1">Email Address (Optional)</label>
-                    <input type="email" id="profile-email-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="your.agent@example.com">
-                </div>
-
-                <h4 class="text-md font-bold mb-3 text-primary border-t pt-4">Social Media Handles</h4>
-                <div class="mb-4">
-                    <label for="profile-instagram-input" class="block text-sm font-medium text-gray-700 mb-1">Instagram Handle (Optional)</label>
-                    <div class="flex items-center">
-                        <span class="inline-flex items-center p-2 bg-slate-100 border border-r-0 border-slate-300 rounded-l-lg text-gray-500 text-sm">@</span>
-                        <input type="text" id="profile-instagram-input" placeholder="e.g., lionel_messi" class="w-full p-2 border border-slate-300 rounded-r-lg focus:ring-green-500 focus:border-green-500">
-                    </div>
-                </div>
-                <div class="mb-6">
-                    <label for="profile-twitter-input" class="block text-sm font-medium text-gray-700 mb-1">X (Twitter) Handle (Optional)</label>
-                    <div class="flex items-center">
-                        <span class="inline-flex items-center p-2 bg-slate-100 border border-r-0 border-slate-300 rounded-l-lg text-gray-500 text-sm">@</span>
-                        <input type="text" id="profile-twitter-input" placeholder="e.g., cristiano" class="w-full p-2 border border-slate-300 rounded-r-lg focus:ring-green-500 focus:border-green-500">
-                    </div>
                 </div>
                 
                 <div class="flex justify-end space-x-3">
@@ -399,11 +477,108 @@
             </form>
         </div>
     </div>
+
+    <!-- Followers Modal -->
+    <div id="followers-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary">Followers</h3>
+                <button onclick="closeFollowersModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div id="followers-list" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- Following Modal -->
+    <div id="following-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 max-h-[80vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-primary">Following</h3>
+                <button onclick="closeFollowingModal()" class="text-gray-500 hover:text-gray-700">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div id="following-list" class="space-y-3"></div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="user-profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl my-8 max-h-[90vh] overflow-y-auto">
+            <!-- Profile Header -->
+            <div class="bg-gradient-to-r from-green-600 to-green-700 p-6 relative">
+                <button onclick="closeUserProfileModal()" class="absolute top-4 right-4 text-white hover:text-gray-200">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+                <div class="flex items-center gap-4">
+                    <div class="w-20 h-20 rounded-full bg-white flex items-center justify-center text-green-600 font-bold text-3xl shadow-lg">
+                        <span id="user-profile-avatar"></span>
+                    </div>
+                    <div class="text-white">
+                        <h2 id="user-profile-name" class="text-3xl font-bold mb-1">Player Name</h2>
+                        <p id="user-profile-position" class="text-green-100 text-lg">Position</p>
+                        <p id="user-profile-club" class="text-green-50 text-sm mt-1">Club</p>
+                    </div>
+                </div>
+                <div class="flex gap-6 mt-4 text-white">
+                    <div>
+                        <span id="user-profile-followers-count" class="font-bold text-xl">0</span>
+                        <span class="text-green-100 text-sm ml-1">Followers</span>
+                    </div>
+                    <div>
+                        <span id="user-profile-following-count" class="font-bold text-xl">0</span>
+                        <span class="text-green-100 text-sm ml-1">Following</span>
+                    </div>
+                    <div>
+                        <span id="user-profile-posts-count" class="font-bold text-xl">0</span>
+                        <span class="text-green-100 text-sm ml-1">Posts</span>
+                    </div>
+                    <div>
+                        <span id="user-profile-highlights-count" class="font-bold text-xl">0</span>
+                        <span class="text-green-100 text-sm ml-1">Highlights</span>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button id="user-profile-follow-btn" onclick="toggleFollowFromProfile()" class="bg-white text-green-600 font-semibold py-2 px-6 rounded-full hover:bg-gray-100 transition duration-150">
+                        Follow
+                    </button>
+                </div>
+            </div>
+
+            <!-- Profile Content Tabs -->
+            <div class="border-b border-gray-200">
+                <nav class="flex">
+                    <button onclick="switchProfileTab('posts')" data-tab="posts" class="profile-tab flex-1 py-3 px-4 text-center font-semibold text-green-600 border-b-2 border-green-600">
+                        Posts
+                    </button>
+                    <button onclick="switchProfileTab('highlights')" data-tab="highlights" class="profile-tab flex-1 py-3 px-4 text-center font-semibold text-gray-500 hover:text-gray-700">
+                        Highlights
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Posts Tab -->
+            <div id="profile-posts-tab" class="p-6">
+                <div id="user-profile-posts" class="space-y-4">
+                    <p class="text-center text-gray-500 py-8">Loading posts...</p>
+                </div>
+            </div>
+
+            <!-- Highlights Tab -->
+            <div id="profile-highlights-tab" class="p-6 hidden">
+                <div id="user-profile-highlights" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <p class="col-span-full text-center text-gray-500 py-8">Loading highlights...</p>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-  import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, where, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
   import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
 
   const firebaseConfig = {
@@ -418,9 +593,11 @@
 
   let app, db, auth, storage;
   let currentUserId = null;
-  let currentUserProfile = { name: 'Anonymous Player', position:'Unspecified', club:'', phone:'', email:'', instagram:'', twitter:'' };
+  let currentUserProfile = { name: 'Anonymous Player', position:'Unspecified', club:'', followers:[], following:[] };
   let currentChatId = null;
   let chatUnsubscribe = null;
+  let allUsers = [];
+  let viewingUserId = null;
 
   const USERS_COLLECTION = "users";
   const POSTS_COLLECTION = "football_posts";
@@ -489,7 +666,6 @@
     
     try {
       await setPersistence(auth, browserLocalPersistence);
-      await signInAnonymously(auth);
     } catch (e) {
       console.warn("Auth error:", e);
     }
@@ -498,10 +674,16 @@
       if (user) {
         currentUserId = user.uid;
         await ensureUserDoc(user.uid);
+        document.getElementById('auth-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
         listenToFeed();
         listenToHighlights();
+        listenToUsers();
+        switchView('home');
       } else {
         currentUserId = null;
+        document.getElementById('auth-screen').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
       }
       lucide.createIcons();
     });
@@ -515,11 +697,9 @@
       const base = { 
         name: 'Player' + uid.substring(0, 6), 
         position: 'Unspecified', 
-        club: '', 
-        phone: '', 
-        email: '', 
-        instagram: '', 
-        twitter: '',
+        club: '',
+        followers: [],
+        following: [],
         createdAt: serverTimestamp()
       };
       await setDoc(ref, base);
@@ -548,46 +728,471 @@
     const greetingEl = document.getElementById('user-greeting');
     if (greetingEl) greetingEl.textContent = `Welcome, ${currentUserProfile.name}`;
 
-    // Contact info
-    const phoneEl = document.getElementById('profile-phone-display');
-    const phoneText = document.getElementById('phone-text');
-    if (currentUserProfile.phone) {
-      if (phoneText) phoneText.textContent = currentUserProfile.phone;
-      if (phoneEl) phoneEl.classList.remove('hidden');
-    } else {
-      if (phoneEl) phoneEl.classList.add('hidden');
-    }
-
-    const emailEl = document.getElementById('profile-email-display');
-    const emailText = document.getElementById('email-text');
-    if (currentUserProfile.email) {
-      if (emailText) emailText.textContent = currentUserProfile.email;
-      if (emailEl) emailEl.classList.remove('hidden');
-    } else {
-      if (emailEl) emailEl.classList.add('hidden');
-    }
-
-    // Social media
-    const instaEl = document.getElementById('profile-instagram-display');
-    const instaText = document.getElementById('instagram-text');
-    if (currentUserProfile.instagram) {
-      if (instaText) instaText.textContent = '@' + currentUserProfile.instagram;
-      if (instaEl) instaEl.classList.remove('hidden');
-    } else {
-      if (instaEl) instaEl.classList.add('hidden');
-    }
-
-    const twitterEl = document.getElementById('profile-twitter-display');
-    const twitterText = document.getElementById('twitter-text');
-    if (currentUserProfile.twitter) {
-      if (twitterText) twitterText.textContent = '@' + currentUserProfile.twitter;
-      if (twitterEl) twitterEl.classList.remove('hidden');
-    } else {
-      if (twitterEl) twitterEl.classList.add('hidden');
-    }
+    const followersCount = document.getElementById('followers-count');
+    if (followersCount) followersCount.textContent = (currentUserProfile.followers || []).length;
+    
+    const followingCount = document.getElementById('following-count');
+    if (followingCount) followingCount.textContent = (currentUserProfile.following || []).length;
 
     lucide.createIcons();
   }
+
+  function listenToUsers(){
+    try {
+      const q = query(collection(db, USERS_COLLECTION));
+      onSnapshot(q, snap => {
+        allUsers = [];
+        snap.forEach(d => {
+          const userData = { id: d.id, ...d.data() };
+          allUsers.push(userData);
+          if (d.id === currentUserId) {
+            currentUserProfile = { ...currentUserProfile, ...userData };
+            updateProfileUI();
+          }
+        });
+        renderDiscoverPage();
+      });
+    } catch (e) {
+      console.error("Error listening to users:", e);
+    }
+  }
+
+  function renderDiscoverPage(){
+    const container = document.getElementById('discover-container');
+    const loading = document.getElementById('discover-loading');
+    if (!container) return;
+    
+    if (loading) loading.style.display = 'none';
+    container.innerHTML = '';
+    
+    const otherUsers = allUsers.filter(u => u.id !== currentUserId);
+    
+    if (otherUsers.length === 0) {
+      container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><p>No players to discover yet. Be patient!</p></div>';
+      return;
+    }
+    
+    otherUsers.forEach(user => {
+      const isFollowing = (currentUserProfile.following || []).includes(user.id);
+      
+      const card = document.createElement('div');
+      card.className = 'user-card bg-white p-6 rounded-xl shadow-lg border border-slate-200 transition duration-200 cursor-pointer';
+      
+      card.innerHTML = `
+        <div class="flex items-start justify-between mb-4" onclick="viewUserProfile('${user.id}')">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-lg">
+              ${(user.name || 'P')[0].toUpperCase()}
+            </div>
+            <div>
+              <h4 class="font-bold text-gray-900">${escapeHtml(user.name || 'Player')}</h4>
+              <p class="text-sm text-gray-600">${escapeHtml(user.position || 'Player')}</p>
+              ${user.club ? `<p class="text-xs text-gray-500">${escapeHtml(user.club)}</p>` : ''}
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex gap-2 text-xs text-gray-600 mb-4">
+          <span><strong>${(user.followers || []).length}</strong> Followers</span>
+          <span>•</span>
+          <span><strong>${(user.following || []).length}</strong> Following</span>
+        </div>
+        
+        <button 
+          onclick="event.stopPropagation(); toggleFollow('${user.id}')" 
+          class="w-full py-2 px-4 rounded-full font-semibold transition duration-150 ${
+            isFollowing 
+              ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+              : 'bg-green-600 text-white hover:bg-green-700'
+          }"
+        >
+          ${isFollowing ? 'Following' : 'Follow'}
+        </button>
+      `;
+      
+      container.appendChild(card);
+    });
+    
+    lucide.createIcons();
+  }
+
+  window.toggleFollow = async function(targetUserId) {
+    if (!currentUserId) {
+      alert('Please log in first');
+      return;
+    }
+    
+    if (currentUserId === targetUserId) {
+      alert('You cannot follow yourself');
+      return;
+    }
+    
+    const myRef = doc(db, USERS_COLLECTION, currentUserId);
+    const targetRef = doc(db, USERS_COLLECTION, targetUserId);
+    
+    try {
+      const isFollowing = (currentUserProfile.following || []).includes(targetUserId);
+      
+      if (isFollowing) {
+        // Unfollow
+        const updatedFollowing = (currentUserProfile.following || []).filter(id => id !== targetUserId);
+        await updateDoc(myRef, {
+          following: updatedFollowing
+        });
+        
+        const targetDoc = await getDoc(targetRef);
+        if (targetDoc.exists()) {
+          const targetData = targetDoc.data();
+          const updatedFollowers = (targetData.followers || []).filter(id => id !== currentUserId);
+          await updateDoc(targetRef, {
+            followers: updatedFollowers
+          });
+        }
+        
+        currentUserProfile.following = updatedFollowing;
+      } else {
+        // Follow
+        const updatedFollowing = [...(currentUserProfile.following || []), targetUserId];
+        await updateDoc(myRef, {
+          following: updatedFollowing
+        });
+        
+        const targetDoc = await getDoc(targetRef);
+        if (targetDoc.exists()) {
+          const targetData = targetDoc.data();
+          const updatedFollowers = [...(targetData.followers || []), currentUserId];
+          await updateDoc(targetRef, {
+            followers: updatedFollowers
+          });
+        }
+        
+        currentUserProfile.following = updatedFollowing;
+      }
+      
+      updateProfileUI();
+      
+    } catch (error) {
+      console.error("Error toggling follow:", error);
+      alert('Failed to update follow status: ' + error.message);
+    }
+  };
+
+  window.showFollowersModal = async function() {
+    const modal = document.getElementById('followers-modal');
+    const list = document.getElementById('followers-list');
+    
+    modal.classList.remove('hidden');
+    list.innerHTML = '<p class="text-gray-500 text-center">Loading...</p>';
+    
+    const followerIds = currentUserProfile.followers || [];
+    
+    if (followerIds.length === 0) {
+      list.innerHTML = '<p class="text-gray-500 text-center">No followers yet</p>';
+      return;
+    }
+    
+    list.innerHTML = '';
+    
+    for (const userId of followerIds) {
+      const user = allUsers.find(u => u.id === userId);
+      if (user) {
+        const userEl = document.createElement('div');
+        userEl.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition';
+        userEl.innerHTML = `
+          <div class="flex items-center gap-3" onclick="viewUserProfile('${user.id}')">
+            <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+              ${(user.name || 'P')[0].toUpperCase()}
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">${escapeHtml(user.name || 'Player')}</p>
+              <p class="text-xs text-gray-600">${escapeHtml(user.position || '')}</p>
+            </div>
+          </div>
+        `;
+        list.appendChild(userEl);
+      }
+    }
+    
+    lucide.createIcons();
+  };
+
+  window.showFollowingModal = async function() {
+    const modal = document.getElementById('following-modal');
+    const list = document.getElementById('following-list');
+    
+    modal.classList.remove('hidden');
+    list.innerHTML = '<p class="text-gray-500 text-center">Loading...</p>';
+    
+    const followingIds = currentUserProfile.following || [];
+    
+    if (followingIds.length === 0) {
+      list.innerHTML = '<p class="text-gray-500 text-center">Not following anyone yet</p>';
+      return;
+    }
+    
+    list.innerHTML = '';
+    
+    for (const userId of followingIds) {
+      const user = allUsers.find(u => u.id === userId);
+      if (user) {
+        const isFollowing = (currentUserProfile.following || []).includes(userId);
+        const userEl = document.createElement('div');
+        userEl.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition';
+        userEl.innerHTML = `
+          <div class="flex items-center gap-3 cursor-pointer" onclick="viewUserProfile('${userId}')">
+            <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+              ${(user.name || 'P')[0].toUpperCase()}
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900">${escapeHtml(user.name || 'Player')}</p>
+              <p class="text-xs text-gray-600">${escapeHtml(user.position || '')}</p>
+            </div>
+          </div>
+          <button 
+            onclick="event.stopPropagation(); toggleFollow('${userId}')" 
+            class="py-1 px-3 rounded-full text-sm font-semibold ${
+              isFollowing 
+                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                : 'bg-green-600 text-white hover:bg-green-700'
+            }"
+          >
+            ${isFollowing ? 'Unfollow' : 'Follow'}
+          </button>
+        `;
+        list.appendChild(userEl);
+      }
+    }
+    
+    lucide.createIcons();
+  };
+
+  window.closeFollowersModal = function() {
+    document.getElementById('followers-modal').classList.add('hidden');
+  };
+
+  window.closeFollowingModal = function() {
+    document.getElementById('following-modal').classList.add('hidden');
+  };
+
+  window.viewUserProfile = async function(userId) {
+    viewingUserId = userId;
+    const modal = document.getElementById('user-profile-modal');
+    
+    try {
+      const userDoc = await getDoc(doc(db, USERS_COLLECTION, userId));
+      if (!userDoc.exists()) {
+        alert('User not found');
+        return;
+      }
+      
+      const userData = userDoc.data();
+      
+      // Update profile header
+      document.getElementById('user-profile-avatar').textContent = (userData.name || 'P')[0].toUpperCase();
+      document.getElementById('user-profile-name').textContent = userData.name || 'Player';
+      document.getElementById('user-profile-position').textContent = userData.position || 'Player';
+      document.getElementById('user-profile-club').textContent = userData.club || 'Club not specified';
+      document.getElementById('user-profile-followers-count').textContent = (userData.followers || []).length;
+      document.getElementById('user-profile-following-count').textContent = (userData.following || []).length;
+      
+      // Update follow button
+      const isFollowing = (currentUserProfile.following || []).includes(userId);
+      const followBtn = document.getElementById('user-profile-follow-btn');
+      followBtn.textContent = isFollowing ? 'Following' : 'Follow';
+      followBtn.className = `font-semibold py-2 px-6 rounded-full transition duration-150 ${
+        isFollowing 
+          ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+          : 'bg-white text-green-600 hover:bg-gray-100'
+      }`;
+      
+      // Load user's posts
+      let posts = [];
+      try {
+        const postsQuery = query(
+          collection(db, POSTS_COLLECTION),
+          orderBy('timestamp', 'desc')
+        );
+        const postsSnap = await getDocs(postsQuery);
+        postsSnap.forEach(d => {
+          const postData = d.data();
+          if (postData.userId === userId) {
+            posts.push({ id: d.id, ...postData });
+          }
+        });
+      } catch (error) {
+        console.error('Error loading posts:', error);
+      }
+      
+      document.getElementById('user-profile-posts-count').textContent = posts.length;
+      
+      const postsContainer = document.getElementById('user-profile-posts');
+      postsContainer.innerHTML = '';
+      
+      if (posts.length === 0) {
+        postsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No posts yet</p>';
+      } else {
+        posts.forEach(post => {
+          const postCard = document.createElement('div');
+          postCard.className = 'bg-slate-50 p-4 rounded-lg border border-slate-200';
+          const timeStr = post.timestamp ? formatTime(post.timestamp.toDate()) : 'Just now';
+          postCard.innerHTML = `
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-xs text-gray-500">${timeStr}</span>
+            </div>
+            <p class="text-gray-800">${escapeHtml(post.content || '')}</p>
+          `;
+          postsContainer.appendChild(postCard);
+        });
+      }
+      
+      // Load user's highlights
+      let highlights = [];
+      try {
+        const highlightsQuery = query(
+          collection(db, HIGHLIGHTS_COLLECTION),
+          orderBy('timestamp', 'desc')
+        );
+        const highlightsSnap = await getDocs(highlightsQuery);
+        highlightsSnap.forEach(d => {
+          const highlightData = d.data();
+          if (highlightData.userId === userId) {
+            highlights.push({ id: d.id, ...highlightData });
+          }
+        });
+      } catch (error) {
+        console.error('Error loading highlights:', error);
+      }
+      
+      document.getElementById('user-profile-highlights-count').textContent = highlights.length;
+      
+      const highlightsContainer = document.getElementById('user-profile-highlights');
+      highlightsContainer.innerHTML = '';
+      
+      if (highlights.length === 0) {
+        highlightsContainer.innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">No highlights yet</p>';
+      } else {
+        highlights.forEach(highlight => {
+          const card = document.createElement('a');
+          card.href = highlight.videoUrl || '#';
+          card.target = '_blank';
+          card.className = 'aspect-[9/16] bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group hover:scale-105 transition';
+          card.innerHTML = `
+            <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+            <i data-lucide="play-circle" class="w-10 h-10 mb-2 relative z-10"></i>
+            <p class="text-xs font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+          `;
+          highlightsContainer.appendChild(card);
+        });
+      }
+      
+      modal.classList.remove('hidden');
+      switchProfileTab('posts');
+      lucide.createIcons();
+      
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      alert('Failed to load user profile: ' + error.message);
+    }
+  };
+
+  window.closeUserProfileModal = function() {
+    document.getElementById('user-profile-modal').classList.add('hidden');
+    viewingUserId = null;
+  };
+
+  window.switchProfileTab = function(tab) {
+    document.querySelectorAll('.profile-tab').forEach(btn => {
+      if (btn.getAttribute('data-tab') === tab) {
+        btn.className = 'profile-tab flex-1 py-3 px-4 text-center font-semibold text-green-600 border-b-2 border-green-600';
+      } else {
+        btn.className = 'profile-tab flex-1 py-3 px-4 text-center font-semibold text-gray-500 hover:text-gray-700';
+      }
+    });
+    
+    if (tab === 'posts') {
+      document.getElementById('profile-posts-tab').classList.remove('hidden');
+      document.getElementById('profile-highlights-tab').classList.add('hidden');
+    } else {
+      document.getElementById('profile-posts-tab').classList.add('hidden');
+      document.getElementById('profile-highlights-tab').classList.remove('hidden');
+    }
+    
+    lucide.createIcons();
+  };
+
+  window.toggleFollowFromProfile = async function() {
+    if (viewingUserId) {
+      await toggleFollow(viewingUserId);
+      // Refresh the profile view to update follow button
+      await viewUserProfile(viewingUserId);
+    }
+  };
+
+  window.showLoginForm = function() {
+    document.getElementById('login-form').classList.remove('hidden');
+    document.getElementById('register-form').classList.add('hidden');
+    document.getElementById('auth-error').classList.add('hidden');
+  };
+
+  window.showRegisterForm = function() {
+    document.getElementById('login-form').classList.add('hidden');
+    document.getElementById('register-form').classList.remove('hidden');
+    document.getElementById('auth-error').classList.add('hidden');
+  };
+
+  window.handleLogin = async function(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('login-email').value;
+    const password = document.getElementById('login-password').value;
+    const errorEl = document.getElementById('auth-error');
+    
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      console.error("Login error:", error);
+      errorEl.textContent = error.message || 'Failed to log in. Please check your credentials.';
+      errorEl.classList.remove('hidden');
+    }
+  };
+
+  window.handleRegister = async function(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('register-name').value;
+    const email = document.getElementById('register-email').value;
+    const password = document.getElementById('register-password').value;
+    const position = document.getElementById('register-position').value;
+    const errorEl = document.getElementById('auth-error');
+    
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      
+      await setDoc(doc(db, USERS_COLLECTION, user.uid), {
+        name: name,
+        position: position,
+        club: '',
+        followers: [],
+        following: [],
+        createdAt: serverTimestamp()
+      });
+      
+    } catch (error) {
+      console.error("Register error:", error);
+      errorEl.textContent = error.message || 'Failed to create account. Please try again.';
+      errorEl.classList.remove('hidden');
+    }
+  };
+
+  window.handleLogout = async function() {
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Logout error:", error);
+      alert('Failed to log out');
+    }
+  };
 
   function listenToFeed(){
     const loadingEl = document.getElementById('loading-indicator');
@@ -629,12 +1234,12 @@
       
       card.innerHTML = `
         <div class="flex items-start gap-3 mb-3">
-          <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+          <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold cursor-pointer" onclick="viewUserProfile('${post.userId}')">
             ${(post.username || 'A')[0].toUpperCase()}
           </div>
           <div class="flex-grow">
             <div class="flex items-center gap-2">
-              <h4 class="font-bold text-gray-900">${escapeHtml(post.username || 'Anonymous Player')}</h4>
+              <h4 class="font-bold text-gray-900 cursor-pointer hover:text-green-600" onclick="viewUserProfile('${post.userId}')">${escapeHtml(post.username || 'Anonymous Player')}</h4>
               <span class="text-xs text-gray-400">${timeStr}</span>
             </div>
             <p class="text-sm text-gray-600">${escapeHtml(post.position || '')} ${post.club ? '• ' + escapeHtml(post.club) : ''}</p>
@@ -674,7 +1279,7 @@
     container.innerHTML = '';
     
     if (highlights.length === 0) {
-      container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><i data-lucide="video-off" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No highlights yet. Upload yours to get started!</p></div>';
+      container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><i data-lucide="video-off" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No highlights yet. Upload yours!</p></div>';
       lucide.createIcons();
       return;
     }
@@ -791,7 +1396,7 @@
       fileInput.value = '';
       urlInput.value = '';
       titleInput.value = '';
-      document.getElementById('file-upload-label').textContent = 'Select a video file from your device';
+      document.getElementById('file-upload-label').textContent = 'Select a video file';
       btn.textContent = 'Share Highlight';
       btn.disabled = false;
       
@@ -914,10 +1519,6 @@
     document.getElementById('profile-name-input').value = currentUserProfile.name || '';
     document.getElementById('profile-position-input').value = currentUserProfile.position || 'Unspecified';
     document.getElementById('profile-club-input').value = currentUserProfile.club || '';
-    document.getElementById('profile-phone-input').value = currentUserProfile.phone || '';
-    document.getElementById('profile-email-input').value = currentUserProfile.email || '';
-    document.getElementById('profile-instagram-input').value = currentUserProfile.instagram || '';
-    document.getElementById('profile-twitter-input').value = currentUserProfile.twitter || '';
     
     modal.classList.remove('hidden');
   };
@@ -932,11 +1533,7 @@
     const newProfile = {
       name: document.getElementById('profile-name-input').value.trim(),
       position: document.getElementById('profile-position-input').value,
-      club: document.getElementById('profile-club-input').value.trim(),
-      phone: document.getElementById('profile-phone-input').value.trim(),
-      email: document.getElementById('profile-email-input').value.trim(),
-      instagram: document.getElementById('profile-instagram-input').value.trim(),
-      twitter: document.getElementById('profile-twitter-input').value.trim()
+      club: document.getElementById('profile-club-input').value.trim()
     };
     
     try {
@@ -952,7 +1549,7 @@
   }
 
   window.switchView = function(view) {
-    ['home-view', 'feed-view', 'highlights-view', 'chat-view'].forEach(id => {
+    ['home-view', 'feed-view', 'discover-view', 'highlights-view', 'chat-view'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.classList.add('hidden');
     });
@@ -984,13 +1581,6 @@
     });
     
     lucide.createIcons();
-  };
-
-  window.closeChatRoom = function() {
-    const roomContainer = document.getElementById('chat-room-container');
-    if (roomContainer && window.innerWidth < 768) {
-      roomContainer.classList.add('hidden');
-    }
   };
 
   function formatTime(date) {
