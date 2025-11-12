@@ -5,71 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>U.Scout - The Footballer Network</title>
     
-    <!-- Using the JIT CDN for optimized local development -->
     <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
     
-    <!-- Tailwind Configuration Block (Simulating a local config setup) -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'primary': '#1f2937', /* Dark Gray/Black */
-                        'secondary': '#16a34a', /* Vibrant Green */
+                        'primary': '#1f2937',
+                        'secondary': '#16a34a',
                         'accent': '#16a34a',
                     },
                 }
             }
         }
     </script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Custom scrollbar styling for better aesthetics */
         ::-webkit-scrollbar {
             width: 8px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #475569; /* slate-600 */
+            background: #475569;
             border-radius: 4px;
         }
         ::-webkit-scrollbar-track {
-            background: #e2e8f0; /* slate-200 */
+            background: #e2e8f0;
         }
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f8fafc; /* slate-50 - Light background for content */
+            background-color: #f8fafc;
         }
-        /* Custom black/dark gray primary for the black part of the theme */
         .primary-color {
-            background-color: #1f2937; /* gray-800 */
+            background-color: #1f2937;
         }
-        /* Custom green accent for text and icons */
         .text-primary {
-            color: #16a34a; /* green-600 */
+            color: #16a34a;
         }
         .active-nav {
-            border-bottom: 3px solid #16a34a; /* green-600 */
-            /* Ensure text color is right for active desktop nav */
+            border-bottom: 3px solid #16a34a;
             color: #ffffff !important; 
         }
-        /* Styles for the Reels/Highlights grid */
         .highlight-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* Default to 2 columns on mobile/small screen */
+            grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
         }
-        @media (min-width: 768px) { /* 3 columns on desktop */
+        @media (min-width: 768px) {
             .highlight-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
         .highlight-card {
-            aspect-ratio: 9/16; /* Reel ratio */
-            background-color: #334155; /* slate-700 */
+            aspect-ratio: 9/16;
+            background-color: #334155;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
-        
-        /* Home View Styles */
+        .highlight-card:hover {
+            transform: scale(1.05);
+        }
         .home-video-container {
             position: fixed;
             top: 0;
@@ -89,7 +86,6 @@
             left: 50%;
             transform: translate(-50%, -50%);
             object-fit: cover;
-            /* UPDATED BACKGROUND: Simulates a 4K night stadium with green pitch and floodlights */
             background: url('https://placehold.co/1920x1080/0A2A0A/E6E6FA?text=NIGHT+PITCH+4K') center/cover; 
         }
         .home-overlay {
@@ -98,7 +94,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7); /* Dark overlay for contrast */
+            background: rgba(0, 0, 0, 0.7);
             z-index: 1;
         }
         .home-content {
@@ -108,35 +104,28 @@
 </head>
 <body class="min-h-screen">
 
-    <!-- Main Application Container -->
     <div id="app" class="flex flex-col min-h-screen">
         
-        <!-- Header -->
         <header class="primary-color shadow-lg p-4 sticky top-0 z-20">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <!-- LOGO SECTION: Custom SVG implemented here (U.Scout Logo) -->
                 <div class="text-2xl font-extrabold text-white flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7 mr-2 fill-current">
-                        <!-- Football in Green (Theme Accent) -->
                         <circle cx="12" cy="12" r="10" fill="#16a34a" stroke="#f8fafc" stroke-width="1.5"/>
-                        <!-- Target Reticle/Scout Focus in Dark Gray (Theme Primary) -->
                         <path d="M12 2v20 M2 12h20" stroke="#1f2937" stroke-width="1.5"/>
                         <circle cx="12" cy="12" r="5" stroke="#1f2937" stroke-width="1.5" fill="none"/>
                         <circle cx="12" cy="12" r="1.5" fill="#1f2937"/>
                     </svg>
                     U.Scout
                 </div>
-                <!-- END LOGO SECTION -->
                 
                 <div class="flex items-center space-x-4">
                     <span id="user-greeting" class="hidden md:inline text-sm font-medium text-gray-300"></span>
-                    <button onclick="document.getElementById('profile-modal').classList.remove('hidden')" class="bg-white text-gray-800 hover:bg-gray-200 px-3 py-1 rounded-full text-xs font-semibold shadow transition duration-150">
+                    <button onclick="openProfileModal()" class="bg-white text-gray-800 hover:bg-gray-200 px-3 py-1 rounded-full text-xs font-semibold shadow transition duration-150">
                         <i data-lucide="user" class="w-4 h-4 inline mr-1 text-green-600"></i> Profile
                     </button>
                 </div>
             </div>
             
-            <!-- Navigation Tabs (Only visible on larger screens) -->
             <nav class="hidden sm:flex max-w-7xl mx-auto mt-4 border-b border-gray-700">
                 <button data-view="home" onclick="switchView('home')" class="view-btn flex-1 py-2 text-white hover:bg-gray-700 font-semibold transition duration-150 active-nav flex items-center justify-center">
                     <i data-lucide="home" class="w-5 h-5 mr-2"></i> Home
@@ -153,18 +142,14 @@
             </nav>
         </header>
 
-        <!-- Content Area -->
         <main class="max-w-7xl mx-auto flex-grow p-4 w-full">
             
-            <!-- HOME VIEW -->
             <div id="home-view" class="view-container home-content flex items-center justify-center min-h-screen p-4 -mt-20">
-                <!-- Video Background Placeholder -->
                 <div class="home-video-container">
                     <div class="home-video">
                         <div class="home-overlay"></div>
                     </div>
                 </div>
-                <!-- Content Overlay -->
                 <div class="relative z-10 text-center p-8 md:p-12 bg-black/70 backdrop-blur-sm rounded-2xl shadow-2xl max-w-2xl border-2 border-green-600">
                     <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-4 leading-tight">
                         <span class="text-primary">U.Scout</span>: The Global Football Network
@@ -178,18 +163,15 @@
                 </div>
             </div>
 
-            <!-- Feed View -->
             <div id="feed-view" class="view-container hidden">
                 <div class="flex flex-col md:flex-row gap-6">
                     
-                    <!-- Left Sidebar (User Stats/Info) - Profile Page Summary -->
                     <div class="hidden md:block md:w-1/4">
                         <div id="user-info-card" class="bg-white p-6 rounded-xl shadow-lg border border-slate-200 sticky top-20">
                             <h3 class="text-lg font-bold mb-2 text-gray-800 flex items-center">
                                 <i data-lucide="user-check" class="w-5 h-5 mr-2 text-green-600"></i> Player Hub
                             </h3>
                             <div class="space-y-3">
-                                <!-- Core Details -->
                                 <div>
                                     <p class="text-xs text-gray-500">Player Name</p>
                                     <p id="profile-name-display" class="font-semibold text-gray-900 truncate">...</p>
@@ -203,7 +185,6 @@
                                     <p id="profile-club-display" class="text-sm text-gray-700">...</p>
                                 </div>
                                 
-                                <!-- Contact/Social Display (NEW) -->
                                 <div id="profile-contact-display" class="pt-2 border-t mt-4 space-y-2">
                                     <p class="text-xs font-bold text-gray-500">Contact</p>
                                     <p id="profile-phone-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="phone" class="w-4 h-4 mr-1 text-green-600"></i><span id="phone-text"></span></p>
@@ -214,7 +195,6 @@
                                     <p id="profile-instagram-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="instagram" class="w-4 h-4 mr-1 text-green-600"></i><span id="instagram-text"></span></p>
                                     <p id="profile-twitter-display" class="text-sm text-gray-700 flex items-center hidden"><i data-lucide="twitter" class="w-4 h-4 mr-1 text-green-600"></i><span id="twitter-text"></span></p>
                                 </div>
-                                <!-- END Contact/Social Display -->
                                 
                                 <div class="pt-2 border-t mt-4">
                                     <p class="text-xs text-gray-500">Global User ID (Share to Connect)</p>
@@ -224,57 +204,50 @@
                         </div>
                     </div>
 
-                    <!-- Center Feed Content -->
                     <div class="w-full md:w-3/4">
-                        <!-- Post Creation Card -->
                         <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-slate-200">
                             <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
                                 <i data-lucide="pen-tool" class="w-5 h-5 mr-2"></i> Share Your Update
                             </h2>
                             <textarea id="post-content" rows="3" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 resize-none text-gray-700" placeholder="What's happening on the pitch or off it? Share your thoughts, training updates, or insights..."></textarea>
                             <div class="flex justify-end mt-3">
-                                <button id="post-button" onclick="handlePost()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-green-700 transition duration-150 disabled:bg-green-300" disabled>
+                                <button id="post-button" onclick="handlePost()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-green-700 transition duration-150 disabled:bg-green-300 disabled:cursor-not-allowed" disabled>
                                     Post Update
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Loading Indicator -->
                         <div id="loading-indicator" class="text-center p-8 text-gray-500">
                             <div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-primary border-t-transparent rounded-full mb-2"></div>
                             <p>Loading the U.Scout Feed...</p>
                         </div>
 
-                        <!-- Feed Container -->
                         <div id="feed-container" class="space-y-6">
-                            <!-- Posts will be injected here by JavaScript -->
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Highlights (Reels) View - Open Gallery Page -->
             <div id="highlights-view" class="view-container hidden">
                 <h1 class="text-3xl font-extrabold text-primary mb-6 border-b pb-2">Top Player Highlights (Reels)</h1>
                 <p class="text-lg text-gray-600 mb-8">Upload your best skills, goals, and training clips to get seen by the community!</p>
                 
-                <!-- Highlight Submission Card -->
                 <div class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mb-6 border border-slate-200">
                     <h2 class="text-xl font-bold mb-4 text-primary flex items-center">
                         <i data-lucide="upload-cloud" class="w-5 h-5 mr-2"></i> Submit Your Best Highlight
                     </h2>
                     
-                    <!-- File Upload Button/Label -->
                     <label for="highlight-file" class="block w-full text-center py-4 border-2 border-dashed border-green-300 rounded-lg cursor-pointer bg-green-50 hover:bg-green-100 transition duration-150 mb-4">
                         <i data-lucide="video" class="w-6 h-6 mx-auto mb-1 text-primary"></i>
-                        <span id="file-upload-label" class="text-sm font-semibold text-gray-700">Select a video file from your device (Max 60s simulated)</span>
+                        <span id="file-upload-label" class="text-sm font-semibold text-gray-700">Select a video file from your device</span>
                     </label>
                     <input type="file" id="highlight-file" accept="video/mp4,video/quicktime,video/webm" class="hidden">
                     
                     <div class="text-center text-sm text-gray-500 mb-4">-- OR --</div>
                     
-                    <!-- Existing URL Input Section -->
-                    <input type="url" id="highlight-url" placeholder="Paste a public video link (e.g., YouTube) to share your skills..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700">
+                    <input type="url" id="highlight-url" placeholder="Paste a public video link (e.g., YouTube) to share your skills..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700 mb-2">
+                    
+                    <input type="text" id="highlight-title" placeholder="Give your highlight a title..." class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition duration-150 text-gray-700">
                     
                     <div class="flex justify-end mt-3">
                         <button id="highlight-post-button" onclick="handleHighlightPost()" class="bg-green-600 text-white font-semibold py-2 px-6 rounded-full shadow-md hover:bg-green-700 transition duration-150">
@@ -284,7 +257,6 @@
                     <p id="highlight-error" class="text-sm text-red-500 mt-2 hidden">Please provide a video file or a public link.</p>
                 </div>
 
-                <!-- Dynamic Container -->
                 <div id="highlights-container" class="highlight-grid">
                     <div id="highlights-loading" class="col-span-full text-center p-8 text-gray-500">
                         <div class="animate-spin inline-block w-8 h-8 border-4 border-t-4 border-primary border-t-transparent rounded-full mb-2"></div>
@@ -293,14 +265,11 @@
                 </div>
             </div>
             
-            <!-- Chat View -->
             <div id="chat-view" class="view-container hidden">
                 <div class="flex h-[80vh] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
                     
-                    <!-- Chat List (Left Pane) -->
                     <div id="chat-list" class="w-full md:w-1/3 border-r border-slate-200 p-4 space-y-4 overflow-y-auto">
                         
-                        <!-- Global Chat -->
                         <h2 class="text-xl font-bold text-gray-800 flex items-center">
                             <i data-lucide="messages-square" class="w-5 h-5 mr-2 text-primary"></i> Channels
                         </h2>
@@ -310,18 +279,14 @@
                             <p class="text-xs text-gray-500 truncate">Connect with players worldwide...</p>
                         </div>
                         
-                        <!-- Direct Message List -->
-                        <h3 class="text-sm font-bold text-gray-500 mt-6 border-t pt-4">Direct Messages (Follow/DM)</h3>
+                        <h3 class="text-sm font-bold text-gray-500 mt-6 border-t pt-4">Direct Messages</h3>
                         <div id="dm-list-container" class="space-y-2">
                             <div id="dm-list-loading" class="text-xs text-gray-400 text-center py-2">Loading users...</div>
-                            <!-- User list for DMs will be dynamically loaded here -->
                         </div>
                     </div>
                     
-                    <!-- Chat Room (Right Pane) -->
                     <div id="chat-room-container" class="w-full md:w-2/3 flex flex-col hidden md:flex">
                         
-                        <!-- Chat Header with Mobile Back Button -->
                         <div id="chat-room-header" class="p-4 border-b border-slate-200 bg-slate-50 flex items-center">
                             <button id="chat-back-button" onclick="closeChatRoom()" class="hidden md:hidden mr-3 p-1 rounded-full hover:bg-slate-200 text-gray-600">
                                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
@@ -330,7 +295,6 @@
                         </div>
                         
                         <div id="messages-container" class="flex-grow p-4 space-y-3 overflow-y-auto custom-scrollbar">
-                            <!-- Messages will be rendered here -->
                             <div id="chat-placeholder" class="text-center text-gray-500 mt-20">
                                 <i data-lucide="sparkles" class="w-8 h-8 mx-auto mb-2"></i>
                                 <p>Start a conversation in a global channel or DM a player!</p>
@@ -351,7 +315,6 @@
 
         </main>
 
-        <!-- Footer (Mobile Navigation) -->
         <footer class="sm:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-xl z-20">
             <nav class="flex justify-around">
                 <button data-view="home" onclick="switchView('home')" class="view-btn flex flex-col items-center p-3 text-primary active-nav">
@@ -375,12 +338,10 @@
 
     </div>
 
-    <!-- Profile Edit Modal -->
     <div id="profile-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 overflow-y-auto max-h-[90vh]">
             <h3 class="text-xl font-bold mb-4 text-primary">Edit Player Profile</h3>
             <form id="profile-form">
-                <!-- Core Details -->
                 <div class="mb-4">
                     <label for="profile-name-input" class="block text-sm font-medium text-gray-700 mb-1">Full Name / Nickname</label>
                     <input type="text" id="profile-name-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" required>
@@ -402,7 +363,6 @@
                 </div>
                 
                 <h4 class="text-md font-bold mb-3 text-primary border-t pt-4">Contact Info (For Scouts)</h4>
-                <!-- NEW: Phone and Email -->
                 <div class="mb-4">
                     <label for="profile-phone-input" class="block text-sm font-medium text-gray-700 mb-1">Phone Number (Optional)</label>
                     <input type="tel" id="profile-phone-input" class="w-full p-2 border border-slate-300 rounded-lg focus:ring-green-500 focus:border-green-500" placeholder="+123 456 7890">
@@ -413,7 +373,6 @@
                 </div>
 
                 <h4 class="text-md font-bold mb-3 text-primary border-t pt-4">Social Media Handles</h4>
-                <!-- NEW: Instagram Handle -->
                 <div class="mb-4">
                     <label for="profile-instagram-input" class="block text-sm font-medium text-gray-700 mb-1">Instagram Handle (Optional)</label>
                     <div class="flex items-center">
@@ -421,7 +380,6 @@
                         <input type="text" id="profile-instagram-input" placeholder="e.g., lionel_messi" class="w-full p-2 border border-slate-300 rounded-r-lg focus:ring-green-500 focus:border-green-500">
                     </div>
                 </div>
-                <!-- NEW: X/Twitter Handle -->
                 <div class="mb-6">
                     <label for="profile-twitter-input" class="block text-sm font-medium text-gray-700 mb-1">X (Twitter) Handle (Optional)</label>
                     <div class="flex items-center">
@@ -431,7 +389,7 @@
                 </div>
                 
                 <div class="flex justify-end space-x-3">
-                    <button type="button" onclick="document.getElementById('profile-modal').classList.add('hidden')" class="bg-slate-200 text-gray-700 font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition duration-150">
+                    <button type="button" onclick="closeProfileModal()" class="bg-slate-200 text-gray-700 font-semibold py-2 px-4 rounded-full hover:bg-slate-300 transition duration-150">
                         Cancel
                     </button>
                     <button type="submit" class="bg-green-600 text-white font-semibold py-2 px-4 rounded-full hover:bg-green-700 transition duration-150">
@@ -442,11 +400,10 @@
         </div>
     </div>
     
-    <!-- Script Imports -->
     <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
   import { getAuth, signInAnonymously, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+  import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, where, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
   import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
 
   const firebaseConfig = {
@@ -461,8 +418,10 @@
 
   let app, db, auth, storage;
   let currentUserId = null;
-  let currentUserProfile = { name: 'Anonymous Player', position:'', club:'', followers:[], following:[] };
-  let allUsers = [];
+  let currentUserProfile = { name: 'Anonymous Player', position:'Unspecified', club:'', phone:'', email:'', instagram:'', twitter:'' };
+  let currentChatId = null;
+  let chatUnsubscribe = null;
+
   const USERS_COLLECTION = "users";
   const POSTS_COLLECTION = "football_posts";
   const HIGHLIGHTS_COLLECTION = "football_highlights";
@@ -470,217 +429,597 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initFirebase();
-    // wire some UI events if elements exist
-    document.getElementById('chat-message-input')?.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); sendChatMessage(); }});
-    document.getElementById('discover-tab-btn')?.addEventListener('click', ()=>{ switchView('discover'); });
-    document.getElementById('home-tab-btn')?.addEventListener('click', ()=>{ switchView('home'); });
+    setupEventListeners();
   });
+
+  function setupEventListeners() {
+    const postContent = document.getElementById('post-content');
+    const postButton = document.getElementById('post-button');
+    
+    if (postContent) {
+      postContent.addEventListener('input', (e) => {
+        if (postButton) {
+          postButton.disabled = e.target.value.trim().length === 0;
+        }
+      });
+    }
+
+    const chatInput = document.getElementById('chat-message-input');
+    if (chatInput) {
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          window.sendChatMessage();
+        }
+      });
+    }
+
+    const profileForm = document.getElementById('profile-form');
+    if (profileForm) {
+      profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleProfileSave();
+      });
+    }
+
+    const highlightFile = document.getElementById('highlight-file');
+    if (highlightFile) {
+      highlightFile.addEventListener('change', (e) => {
+        const label = document.getElementById('file-upload-label');
+        if (e.target.files.length > 0) {
+          label.textContent = `Selected: ${e.target.files[0].name}`;
+        }
+      });
+    }
+
+    const userIdDisplay = document.getElementById('user-id-display');
+    if (userIdDisplay) {
+      userIdDisplay.addEventListener('click', () => {
+        navigator.clipboard.writeText(currentUserId || '');
+        alert('User ID copied to clipboard!');
+      });
+    }
+  }
 
   async function initFirebase(){
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
     storage = getStorage(app);
+    
     try {
       await setPersistence(auth, browserLocalPersistence);
       await signInAnonymously(auth);
     } catch (e) {
-      console.warn("Auth fallback:", e);
+      console.warn("Auth error:", e);
     }
-    onAuthStateChanged(auth, async (user)=>{
-      if(user){ currentUserId = user.uid; await ensureUserDoc(user.uid); }
-      else { currentUserId = null; }
-      listenToFeed();
-      listenToUsers();
-      listenToHighlights();
-      switchView('home');
+    
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUserId = user.uid;
+        await ensureUserDoc(user.uid);
+        listenToFeed();
+        listenToHighlights();
+      } else {
+        currentUserId = null;
+      }
+      lucide.createIcons();
     });
   }
 
   async function ensureUserDoc(uid){
     const ref = doc(db, USERS_COLLECTION, uid);
     const snap = await getDoc(ref);
-    if(!snap.exists()){
-      const base = { name: 'Player '+uid.substring(0,6), position:'', club:'', followers:[], following:[] };
+    
+    if (!snap.exists()) {
+      const base = { 
+        name: 'Player' + uid.substring(0, 6), 
+        position: 'Unspecified', 
+        club: '', 
+        phone: '', 
+        email: '', 
+        instagram: '', 
+        twitter: '',
+        createdAt: serverTimestamp()
+      };
       await setDoc(ref, base);
       currentUserProfile = base;
     } else {
-      currentUserProfile = { ...currentUserProfile, ...snap.data() };
+      currentUserProfile = { ...snap.data() };
     }
+    
     currentUserProfile.id = uid;
     updateProfileUI();
   }
 
   function updateProfileUI(){
-    const elName = document.getElementById('profile-name-display'); if(elName) elName.textContent = currentUserProfile.name || '';
-    const elMeta = document.getElementById('profile-position-display'); if(elMeta) elMeta.textContent = `${currentUserProfile.position || ''} ${currentUserProfile.club ? '• '+currentUserProfile.club : ''}`;
-    const countEl = document.getElementById('profile-follow-counts'); if(countEl) countEl.textContent = `${(currentUserProfile.followers||[]).length} Followers • ${(currentUserProfile.following||[]).length} Following`;
+    const nameEl = document.getElementById('profile-name-display');
+    if (nameEl) nameEl.textContent = currentUserProfile.name || 'Anonymous Player';
+    
+    const posEl = document.getElementById('profile-position-display');
+    if (posEl) posEl.textContent = currentUserProfile.position || 'Unspecified';
+    
+    const clubEl = document.getElementById('profile-club-display');
+    if (clubEl) clubEl.textContent = currentUserProfile.club || 'Not specified';
+    
+    const userIdEl = document.getElementById('user-id-display');
+    if (userIdEl) userIdEl.textContent = currentUserId || 'Loading...';
+    
+    const greetingEl = document.getElementById('user-greeting');
+    if (greetingEl) greetingEl.textContent = `Welcome, ${currentUserProfile.name}`;
+
+    // Contact info
+    const phoneEl = document.getElementById('profile-phone-display');
+    const phoneText = document.getElementById('phone-text');
+    if (currentUserProfile.phone) {
+      if (phoneText) phoneText.textContent = currentUserProfile.phone;
+      if (phoneEl) phoneEl.classList.remove('hidden');
+    } else {
+      if (phoneEl) phoneEl.classList.add('hidden');
+    }
+
+    const emailEl = document.getElementById('profile-email-display');
+    const emailText = document.getElementById('email-text');
+    if (currentUserProfile.email) {
+      if (emailText) emailText.textContent = currentUserProfile.email;
+      if (emailEl) emailEl.classList.remove('hidden');
+    } else {
+      if (emailEl) emailEl.classList.add('hidden');
+    }
+
+    // Social media
+    const instaEl = document.getElementById('profile-instagram-display');
+    const instaText = document.getElementById('instagram-text');
+    if (currentUserProfile.instagram) {
+      if (instaText) instaText.textContent = '@' + currentUserProfile.instagram;
+      if (instaEl) instaEl.classList.remove('hidden');
+    } else {
+      if (instaEl) instaEl.classList.add('hidden');
+    }
+
+    const twitterEl = document.getElementById('profile-twitter-display');
+    const twitterText = document.getElementById('twitter-text');
+    if (currentUserProfile.twitter) {
+      if (twitterText) twitterText.textContent = '@' + currentUserProfile.twitter;
+      if (twitterEl) twitterEl.classList.remove('hidden');
+    } else {
+      if (twitterEl) twitterEl.classList.add('hidden');
+    }
+
+    lucide.createIcons();
   }
 
-  // --- Feed ---
   function listenToFeed(){
-    try{
-      const q = query(collection(db, POSTS_COLLECTION), orderBy('timestamp','desc'));
-      onSnapshot(q, snap=>{
-        const posts = []; snap.forEach(d=>posts.push({id:d.id, ...d.data()})); renderFeed(posts);
-      }, err=>{ console.error("Feed error",err); const li=document.getElementById('loading-indicator'); if(li) li.innerHTML='<p class="text-red-500">Error fetching feed data.</p>'; });
-    }catch(e){ console.error(e); }
+    const loadingEl = document.getElementById('loading-indicator');
+    
+    try {
+      const q = query(collection(db, POSTS_COLLECTION), orderBy('timestamp', 'desc'));
+      onSnapshot(q, snap => {
+        const posts = [];
+        snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
+        renderFeed(posts);
+        if (loadingEl) loadingEl.style.display = 'none';
+      }, err => {
+        console.error("Feed error:", err);
+        if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500">Error loading feed.</p>';
+      });
+    } catch (e) {
+      console.error(e);
+      if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500">Error initializing feed.</p>';
+    }
   }
 
   function renderFeed(posts){
-    const c = document.getElementById('feed-container'); if(!c) return; c.innerHTML='';
-    if(posts.length===0){ c.innerHTML='<div class="p-6 text-center text-gray-500">No posts yet.</div>'; return; }
-    posts.forEach(p=>{ const card=document.createElement('div'); card.className='post-card'; card.innerHTML=`<b>${escapeHtml(p.username||'Anon')}</b><p>${escapeHtml(p.content||'')}</p>`; c.appendChild(card); });
+    const container = document.getElementById('feed-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (posts.length === 0) {
+      container.innerHTML = '<div class="bg-white p-8 rounded-xl text-center text-gray-500 shadow-lg border border-slate-200"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No posts yet. Be the first to share!</p></div>';
+      lucide.createIcons();
+      return;
+    }
+    
+    posts.forEach(post => {
+      const card = document.createElement('div');
+      card.className = 'bg-white p-6 rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition duration-150';
+      
+      const timeStr = post.timestamp ? formatTime(post.timestamp.toDate()) : 'Just now';
+      
+      card.innerHTML = `
+        <div class="flex items-start gap-3 mb-3">
+          <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+            ${(post.username || 'A')[0].toUpperCase()}
+          </div>
+          <div class="flex-grow">
+            <div class="flex items-center gap-2">
+              <h4 class="font-bold text-gray-900">${escapeHtml(post.username || 'Anonymous Player')}</h4>
+              <span class="text-xs text-gray-400">${timeStr}</span>
+            </div>
+            <p class="text-sm text-gray-600">${escapeHtml(post.position || '')} ${post.club ? '• ' + escapeHtml(post.club) : ''}</p>
+          </div>
+        </div>
+        <p class="text-gray-800 whitespace-pre-wrap">${escapeHtml(post.content || '')}</p>
+      `;
+      
+      container.appendChild(card);
+    });
+    
+    lucide.createIcons();
   }
 
-  // --- Highlights listener (unchanged) ---
   function listenToHighlights(){
-    try{
-      const q = query(collection(db, HIGHLIGHTS_COLLECTION), orderBy('timestamp','desc'));
-      onSnapshot(q, snap=>{ const arr=[]; snap.forEach(d=>arr.push({id:d.id,...d.data()})); renderHighlights(arr); }, err=>{ console.error(err); });
-    }catch(e){ console.error(e); }
-  }
-  function renderHighlights(list){ const c=document.getElementById('highlights-container'); if(!c) return; c.innerHTML=''; list.forEach(h=>{ const a=document.createElement('a'); a.href=h.videoUrl||'#'; a.target='_blank'; a.className='highlight-card'; a.textContent = `${h.title||'Highlight'} — ${h.username||''}`; c.appendChild(a); }); }
-
-  // --- Users listener, follow logic, suggestions, profile modal, discover tab ---
-  function listenToUsers(){
-    try{
-      const q = query(collection(db, USERS_COLLECTION), orderBy('name','asc'));
-      onSnapshot(q, snap=>{
-        allUsers = [];
-        snap.forEach(d=>{ const u={id:d.id, ...d.data()}; allUsers.push(u); });
-        renderUserList();
-        renderSuggestionsPanel();
-      }, err=>{ console.error("Users listen error", err); });
-    }catch(e){ console.error(e); }
+    const loadingEl = document.getElementById('highlights-loading');
+    
+    try {
+      const q = query(collection(db, HIGHLIGHTS_COLLECTION), orderBy('timestamp', 'desc'));
+      onSnapshot(q, snap => {
+        const highlights = [];
+        snap.forEach(d => highlights.push({ id: d.id, ...d.data() }));
+        renderHighlights(highlights);
+        if (loadingEl) loadingEl.style.display = 'none';
+      }, err => {
+        console.error("Highlights error:", err);
+      });
+    } catch (e) {
+      console.error(e);
+    }
   }
 
-  function renderUserList(){
-    const container = document.getElementById('dm-list-container'); if(!container) return; container.innerHTML='';
-    const following = new Set(currentUserProfile.following||[]);
-    allUsers.filter(u=>u.id!==currentUserId).forEach(u=>{
-      const row=document.createElement('div'); row.className='dm-row';
-      row.innerHTML = `<div class="dm-info"><div class="dm-name">${escapeHtml(u.name)}</div><div class="dm-meta">${escapeHtml(u.position||'')} ${u.club? '• '+escapeHtml(u.club):''}</div></div>
-      <div class="dm-actions">
-        <button class="follow-btn ${following.has(u.id)?'following':''}" data-uid="${u.id}">${following.has(u.id)?'Following':'Follow'}</button>
-        <button class="msg-btn" data-uid="${u.id}">Message</button>
-      </div>`;
-      container.appendChild(row);
+  function renderHighlights(highlights){
+    const container = document.getElementById('highlights-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (highlights.length === 0) {
+      container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><i data-lucide="video-off" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No highlights yet. Upload yours to get started!</p></div>';
+      lucide.createIcons();
+      return;
+    }
+    
+    highlights.forEach(highlight => {
+      const card = document.createElement('a');
+      card.href = highlight.videoUrl || '#';
+      card.target = '_blank';
+      card.className = 'highlight-card bg-gradient-to-br from-slate-700 to-slate-900 flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
+      
+      card.innerHTML = `
+        <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+        <i data-lucide="play-circle" class="w-12 h-12 mb-2 relative z-10 group-hover:scale-110 transition duration-200"></i>
+        <p class="text-sm font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+        <p class="text-xs text-gray-300 mt-1 relative z-10">${escapeHtml(highlight.username || 'Player')}</p>
+      `;
+      
+      container.appendChild(card);
     });
-    // wire buttons
-    container.querySelectorAll('.follow-btn').forEach(b=>{ b.onclick = async ()=>{ await toggleFollow(b.dataset.uid, b); }; });
-    container.querySelectorAll('.msg-btn').forEach(b=>{ b.onclick = ()=> startOrOpenDM(b.dataset.uid, b.closest('.dm-row').querySelector('.dm-name').textContent); });
+    
+    lucide.createIcons();
   }
 
-  async function toggleFollow(targetUid, btn){
-    if(!currentUserId) return alert('Sign in required');
-    if(currentUserId===targetUid) return;
-    btn.disabled=true;
-    const meRef = doc(db, USERS_COLLECTION, currentUserId);
-    const themRef = doc(db, USERS_COLLECTION, targetUid);
-    try{
-      const isFollowing = (currentUserProfile.following||[]).includes(targetUid);
-      if(isFollowing){
-        await updateDoc(meRef, { following: arrayRemove(targetUid) });
-        await updateDoc(themRef, { followers: arrayRemove(currentUserId) });
-        currentUserProfile.following = (currentUserProfile.following||[]).filter(id=>id!==targetUid);
-      } else {
-        await updateDoc(meRef, { following: arrayUnion(targetUid) });
-        await updateDoc(themRef, { followers: arrayUnion(currentUserId) });
-        currentUserProfile.following = [...(currentUserProfile.following||[]), targetUid];
+  window.handlePost = async function() {
+    if (!currentUserId) {
+      alert('Please wait for authentication...');
+      return;
+    }
+    
+    const content = document.getElementById('post-content').value.trim();
+    if (!content) return;
+    
+    const btn = document.getElementById('post-button');
+    btn.disabled = true;
+    btn.textContent = 'Posting...';
+    
+    try {
+      await addDoc(collection(db, POSTS_COLLECTION), {
+        userId: currentUserId,
+        username: currentUserProfile.name,
+        position: currentUserProfile.position,
+        club: currentUserProfile.club,
+        content: content,
+        timestamp: serverTimestamp()
+      });
+      
+      document.getElementById('post-content').value = '';
+      btn.textContent = 'Post Update';
+      
+    } catch (error) {
+      console.error("Error posting:", error);
+      alert('Failed to post. Please try again.');
+      btn.textContent = 'Post Update';
+      btn.disabled = false;
+    }
+  };
+
+  window.handleHighlightPost = async function() {
+    if (!currentUserId) {
+      alert('Please wait for authentication...');
+      return;
+    }
+    
+    const fileInput = document.getElementById('highlight-file');
+    const urlInput = document.getElementById('highlight-url');
+    const titleInput = document.getElementById('highlight-title');
+    const errorEl = document.getElementById('highlight-error');
+    const btn = document.getElementById('highlight-post-button');
+    
+    const file = fileInput.files[0];
+    const url = urlInput.value.trim();
+    const title = titleInput.value.trim() || 'My Highlight';
+    
+    if (!file && !url) {
+      errorEl.classList.remove('hidden');
+      return;
+    }
+    
+    errorEl.classList.add('hidden');
+    btn.disabled = true;
+    btn.textContent = 'Uploading...';
+    
+    try {
+      let videoUrl = url;
+      
+      if (file) {
+        const fileName = `highlights/${currentUserId}/${Date.now()}_${file.name}`;
+        const fileRef = storageRef(storage, fileName);
+        const uploadTask = uploadBytesResumable(fileRef, file);
+        
+        await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', 
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              btn.textContent = `Uploading... ${Math.round(progress)}%`;
+            },
+            (error) => reject(error),
+            async () => {
+              videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+              resolve();
+            }
+          );
+        });
       }
-      updateProfileUI();
-      renderUserList();
-      renderSuggestionsPanel();
-    }catch(e){ console.error(e); alert('Failed to update follow'); }
-    btn.disabled=false;
-  }
+      
+      await addDoc(collection(db, HIGHLIGHTS_COLLECTION), {
+        userId: currentUserId,
+        username: currentUserProfile.name,
+        title: title,
+        videoUrl: videoUrl,
+        timestamp: serverTimestamp()
+      });
+      
+      fileInput.value = '';
+      urlInput.value = '';
+      titleInput.value = '';
+      document.getElementById('file-upload-label').textContent = 'Select a video file from your device';
+      btn.textContent = 'Share Highlight';
+      btn.disabled = false;
+      
+      alert('Highlight shared successfully!');
+      
+    } catch (error) {
+      console.error("Error uploading highlight:", error);
+      alert('Failed to upload highlight. Please try again.');
+      btn.textContent = 'Share Highlight';
+      btn.disabled = false;
+    }
+  };
 
-  // Profile modal
-  async function openUserProfile(userId){
-    const modal = document.getElementById('view-profile-modal'); const overlay = document.getElementById('view-profile-overlay');
-    try{
-      const snap = await getDoc(doc(db, USERS_COLLECTION, userId));
-      if(!snap.exists()){ alert('User not found'); return; }
-      const data = snap.data();
-      document.getElementById('view-profile-name').textContent = data.name || 'Player';
-      document.getElementById('view-profile-meta').textContent = `${data.position||''} ${data.club? '• '+data.club:''}`;
-      document.getElementById('view-profile-stats').textContent = `${(data.followers||[]).length} Followers • ${(data.following||[]).length} Following`;
-      // build lists
-      const fList = document.getElementById('view-profile-followers-list'); fList.innerHTML=''; (data.followers||[]).slice(0,50).forEach(async uid=>{ const s = await getDoc(doc(db, USERS_COLLECTION, uid)); if(s.exists()){ const u=s.data(); const el=document.createElement('div'); el.className='mini-user'; el.innerHTML=`<div>${u.name||'Player'}</div><div class="mini-actions"><button onclick="openUserProfile(\'${uid}\')">View</button></div>`; fList.appendChild(el); } });
-      const foList = document.getElementById('view-profile-following-list'); foList.innerHTML=''; (data.following||[]).slice(0,50).forEach(async uid=>{ const s = await getDoc(doc(db, USERS_COLLECTION, uid)); if(s.exists()){ const u=s.data(); const el=document.createElement('div'); el.className='mini-user'; el.innerHTML=`<div>${u.name||'Player'}</div><div class="mini-actions"><button onclick="openUserProfile(\'${uid}\')">View</button></div>`; foList.appendChild(el); } });
-      overlay.classList.remove('hidden'); modal.classList.remove('hidden');
-    }catch(e){ console.error(e); alert('Failed to load profile'); }
-  }
-  window.openUserProfile = openUserProfile;
-  window.closeViewProfile = ()=>{ document.getElementById('view-profile-overlay').classList.add('hidden'); document.getElementById('view-profile-modal').classList.add('hidden'); };
+  window.openChat = async function(chatId, chatName) {
+    currentChatId = chatId;
+    
+    const roomContainer = document.getElementById('chat-room-container');
+    const titleEl = document.getElementById('chat-room-title');
+    const inputArea = document.getElementById('chat-input-area');
+    const placeholder = document.getElementById('chat-placeholder');
+    
+    if (roomContainer) roomContainer.classList.remove('hidden');
+    if (titleEl) titleEl.textContent = chatName;
+    if (inputArea) inputArea.classList.remove('hidden');
+    if (placeholder) placeholder.style.display = 'none';
+    
+    if (chatUnsubscribe) chatUnsubscribe();
+    
+    try {
+      const chatRef = doc(db, CHATS_COLLECTION, chatId);
+      const chatSnap = await getDoc(chatRef);
+      
+      if (!chatSnap.exists()) {
+        await setDoc(chatRef, {
+          id: chatId,
+          name: chatName,
+          messages: [],
+          createdAt: serverTimestamp()
+        });
+      }
+      
+      chatUnsubscribe = onSnapshot(chatRef, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
+          renderMessages(data.messages || []);
+        }
+      });
+      
+    } catch (error) {
+      console.error("Error opening chat:", error);
+      alert('Failed to open chat');
+    }
+  };
 
-  // Suggestions (Discover tab)
-  function renderSuggestionsPanel(){
-    const panel = document.getElementById('discover-container'); if(!panel) return;
-    panel.innerHTML='';
-    const following = new Set(currentUserProfile.following||[]);
-    const candidates = allUsers.filter(u=>u.id!==currentUserId && !following.has(u.id));
-    const sample = candidates.sort(()=>0.5-Math.random()).slice(0,6);
-    if(sample.length===0){ panel.innerHTML='<p class="text-xs text-gray-500">No suggestions</p>'; return; }
-    sample.forEach(u=>{
-      const card=document.createElement('div'); card.className='suggest-card';
-      card.innerHTML = `<div class="s-left"><div class="s-name">${escapeHtml(u.name)}</div><div class="s-meta">${escapeHtml(u.position||'')} ${u.club? '• '+escapeHtml(u.club):''}</div></div>
-      <div class="s-actions"><button class="btn-follow" data-uid="${u.id}">Follow</button> <button class="btn-msg" data-uid="${u.id}">Message</button></div>`;
-      panel.appendChild(card);
+  function renderMessages(messages) {
+    const container = document.getElementById('messages-container');
+    if (!container) return;
+    
+    container.innerHTML = '';
+    
+    if (messages.length === 0) {
+      container.innerHTML = '<div class="text-center text-gray-400 py-8"><p>No messages yet. Start the conversation!</p></div>';
+      return;
+    }
+    
+    messages.forEach(msg => {
+      const msgDiv = document.createElement('div');
+      const isOwn = msg.userId === currentUserId;
+      
+      msgDiv.className = `flex ${isOwn ? 'justify-end' : 'justify-start'}`;
+      
+      msgDiv.innerHTML = `
+        <div class="max-w-xs ${isOwn ? 'bg-green-600 text-white' : 'bg-slate-100 text-gray-800'} rounded-lg p-3">
+          <p class="text-xs font-semibold mb-1">${escapeHtml(msg.username || 'Player')}</p>
+          <p class="text-sm">${escapeHtml(msg.content || '')}</p>
+          <p class="text-xs opacity-70 mt-1">${msg.timestamp ? formatTime(msg.timestamp.toDate()) : 'now'}</p>
+        </div>
+      `;
+      
+      container.appendChild(msgDiv);
     });
-    panel.querySelectorAll('.btn-follow').forEach(b=>b.addEventListener('click', (e)=>{ toggleFollow(b.dataset.uid, b); }));
-    panel.querySelectorAll('.btn-msg').forEach(b=>b.addEventListener('click', (e)=>{ startOrOpenDM(b.dataset.uid, b.closest('.suggest-card').querySelector('.s-name').textContent); }));
+    
+    container.scrollTop = container.scrollHeight;
   }
 
-  // Chat stubs (kept minimal)
-  function startOrOpenDM(uid, name){ /* reuse existing chat logic if present */ alert('Open chat with '+name); }
+  window.sendChatMessage = async function() {
+    if (!currentChatId || !currentUserId) return;
+    
+    const input = document.getElementById('chat-message-input');
+    const content = input.value.trim();
+    
+    if (!content) return;
+    
+    try {
+      const chatRef = doc(db, CHATS_COLLECTION, currentChatId);
+      const chatSnap = await getDoc(chatRef);
+      
+      if (chatSnap.exists()) {
+        const messages = chatSnap.data().messages || [];
+        messages.push({
+          userId: currentUserId,
+          username: currentUserProfile.name,
+          content: content,
+          timestamp: new Date()
+        });
+        
+        await updateDoc(chatRef, { messages });
+        input.value = '';
+      }
+      
+    } catch (error) {
+      console.error("Error sending message:", error);
+      alert('Failed to send message');
+    }
+  };
 
-  // Utilities
-  function escapeHtml(s){ if(!s) return ''; return String(s).replace(/[&<>"']/g, (m)=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+  window.openProfileModal = function() {
+    const modal = document.getElementById('profile-modal');
+    
+    document.getElementById('profile-name-input').value = currentUserProfile.name || '';
+    document.getElementById('profile-position-input').value = currentUserProfile.position || 'Unspecified';
+    document.getElementById('profile-club-input').value = currentUserProfile.club || '';
+    document.getElementById('profile-phone-input').value = currentUserProfile.phone || '';
+    document.getElementById('profile-email-input').value = currentUserProfile.email || '';
+    document.getElementById('profile-instagram-input').value = currentUserProfile.instagram || '';
+    document.getElementById('profile-twitter-input').value = currentUserProfile.twitter || '';
+    
+    modal.classList.remove('hidden');
+  };
 
-  // basic view switcher (home, discover)
-  function switchView(view){
-    ['home-view','discover-view','highlights-view','chat-view'].forEach(id=>{ const e=document.getElementById(id); if(e) e.classList.add('hidden'); });
-    const v = document.getElementById(view+'-view'); if(v) v.classList.remove('hidden');
-    document.querySelectorAll('.view-btn').forEach(b=>b.classList.toggle('active', b.getAttribute('data-view')===view));
-    if(view==='discover') renderSuggestionsPanel();
+  window.closeProfileModal = function() {
+    document.getElementById('profile-modal').classList.add('hidden');
+  };
+
+  async function handleProfileSave() {
+    if (!currentUserId) return;
+    
+    const newProfile = {
+      name: document.getElementById('profile-name-input').value.trim(),
+      position: document.getElementById('profile-position-input').value,
+      club: document.getElementById('profile-club-input').value.trim(),
+      phone: document.getElementById('profile-phone-input').value.trim(),
+      email: document.getElementById('profile-email-input').value.trim(),
+      instagram: document.getElementById('profile-instagram-input').value.trim(),
+      twitter: document.getElementById('profile-twitter-input').value.trim()
+    };
+    
+    try {
+      await updateDoc(doc(db, USERS_COLLECTION, currentUserId), newProfile);
+      currentUserProfile = { ...currentUserProfile, ...newProfile };
+      updateProfileUI();
+      closeProfileModal();
+      alert('Profile updated successfully!');
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      alert('Failed to update profile');
+    }
   }
-  window.switchView = switchView;
+
+  window.switchView = function(view) {
+    ['home-view', 'feed-view', 'highlights-view', 'chat-view'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('hidden');
+    });
+    
+    const viewEl = document.getElementById(view + '-view');
+    if (viewEl) viewEl.classList.remove('hidden');
+    
+    document.querySelectorAll('.view-btn').forEach(btn => {
+      const btnView = btn.getAttribute('data-view');
+      if (btnView === view) {
+        btn.classList.add('active-nav');
+        if (window.innerWidth >= 640) {
+          btn.classList.add('text-white');
+          btn.classList.remove('text-gray-300');
+        } else {
+          btn.classList.add('text-primary');
+          btn.classList.remove('text-gray-500');
+        }
+      } else {
+        btn.classList.remove('active-nav');
+        if (window.innerWidth >= 640) {
+          btn.classList.remove('text-white');
+          btn.classList.add('text-gray-300');
+        } else {
+          btn.classList.remove('text-primary');
+          btn.classList.add('text-gray-500');
+        }
+      }
+    });
+    
+    lucide.createIcons();
+  };
+
+  window.closeChatRoom = function() {
+    const roomContainer = document.getElementById('chat-room-container');
+    if (roomContainer && window.innerWidth < 768) {
+      roomContainer.classList.add('hidden');
+    }
+  };
+
+  function formatTime(date) {
+    const now = new Date();
+    const diff = now - date;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes}m ago`;
+    if (hours < 24) return `${hours}h ago`;
+    if (days < 7) return `${days}d ago`;
+    return date.toLocaleDateString();
+  }
+
+  function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+  }
 
 </script>
-
-<!-- Injected: Profile Modal -->
-<div id="view-profile-overlay" class="fixed inset-0 bg-black/50 hidden"></div>
-<div id="view-profile-modal" class="fixed z-50 left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 hidden w-full max-w-xl bg-white rounded-xl shadow-2xl p-6">
-  <div class="flex justify-between items-start mb-4">
-    <div>
-      <h3 id="view-profile-name" class="text-2xl font-bold">Player</h3>
-      <p id="view-profile-meta" class="text-sm text-gray-500">Position • Club</p>
-      <p id="view-profile-stats" class="text-xs text-gray-400 mt-2"></p>
-    </div>
-    <div id="view-profile-follow-btn"></div>
-  </div>
-  <div class="grid grid-cols-2 gap-4">
-    <div>
-      <h4 class="font-semibold text-sm mb-2">Followers</h4>
-      <div id="view-profile-followers-list" class="max-h-48 overflow-y-auto p-2 bg-slate-50 rounded"></div>
-    </div>
-    <div>
-      <h4 class="font-semibold text-sm mb-2">Following</h4>
-      <div id="view-profile-following-list" class="max-h-48 overflow-y-auto p-2 bg-slate-50 rounded"></div>
-    </div>
-  </div>
-  <div class="flex justify-end mt-4">
-    <button onclick="closeViewProfile()" class="px-4 py-2 rounded-full bg-slate-200 hover:bg-slate-300">Close</button>
-  </div>
-</div>
-
-<!-- Injected: Discover view container (tab) -->
-<div id="discover-view" class="hidden p-4">
-  <h3 class="text-lg font-bold mb-3">Discover Players</h3>
-  <div id="discover-container" class="grid grid-cols-1 gap-3"></div>
-</div>
 
 </body>
 </html>
