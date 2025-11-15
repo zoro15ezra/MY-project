@@ -137,6 +137,9 @@
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <input type="password" id="login-password" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <button type="button" onclick="handlePasswordResetPrompt()" class="text-xs text-green-600 font-semibold hover:text-green-700 mt-2 block float-right">
+                            Forgot Password?
+                        </button>
                     </div>
                     <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-full hover:bg-green-700 transition duration-200">
                         Log In
@@ -564,7 +567,7 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
         import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, setDoc, updateDoc, addDoc, serverTimestamp, arrayUnion, arrayRemove, getDocs } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
         import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-storage.js";
 
@@ -738,7 +741,6 @@
           const followingCount = document.getElementById('following-count');
           if (followingCount) followingCount.textContent = (currentUserProfile.following || []).length;
           
-          // Re-render chat list whenever user profile data changes (for mutual followers)
           if (document.getElementById('chat-list')) renderChatList();
 
           lucide.createIcons();
@@ -754,11 +756,9 @@
             const listContainer = document.getElementById('chat-list');
             if (!listContainer) return;
             
-            // Remove previous private chat elements
             const currentPrivateChats = listContainer.querySelectorAll('.private-chat-header, .private-chat-room, .no-dm-message');
             currentPrivateChats.forEach(chat => chat.remove());
             
-            // Find users who are in BOTH lists (Mutual Follow)
             const myFollowers = currentUserProfile.followers || [];
             const myFollowing = currentUserProfile.following || [];
             const mutualFollowIds = myFollowers.filter(id => myFollowing.includes(id));
@@ -837,7 +837,6 @@
           try {
             const chatRef = doc(db, collectionName, chatId);
             
-            // Set up initial document if it doesn't exist
             const chatSnap = await getDoc(chatRef);
             if (!chatSnap.exists()) {
                 const participants = collectionName === PRIVATE_CHATS_COLLECTION ? chatId.split('_') : [];
@@ -850,7 +849,6 @@
                 });
             }
             
-            // Set up the real-time listener
             chatUnsubscribe = onSnapshot(doc(db, collectionName, chatId), (snap) => {
               if (snap.exists()) {
                 const data = snap.data();
@@ -899,7 +897,6 @@
                 timestamp: serverTimestamp() 
             };
               
-            // Use arrayUnion to append new message to the existing array
             await updateDoc(chatRef, { 
                 messages: arrayUnion(newMessage)
             });
@@ -911,7 +908,30 @@
             alert('Failed to send message: ' + error.message);
           }
         };
+        
+        // --- NEW FORGOT PASSWORD FEATURE ---
+        window.handlePasswordResetPrompt = function() {
+            const email = prompt("Enter your email address to receive a password reset link:");
+            if (email) {
+                handlePasswordReset(email.trim());
+            }
+        };
 
+        async function handlePasswordReset(email) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.classList.add('hidden');
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert(`Password reset link sent to ${email}. Check your inbox!`);
+            } catch (error) {
+                console.error("Password reset error:", error);
+                errorEl.textContent = error.message || 'Failed to send reset link. Please try again or check the email address.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+        // --- END NEW FEATURE ---
+        
         function renderMessages(messages) {
           const container = document.getElementById('messages-container');
           if (!container) return;
@@ -952,6 +972,106 @@
           container.scrollTop = container.scrollHeight;
         }
 
+        window.openProfileModal = function() {
+          const modal = document.getElementById('profile-modal');
+            
+          document.getElementById('profile-name-input').value = currentUserProfile.name || '';
+          document.getElementById('profile-position-input').value = currentUserProfile.position || 'Unspecified';
+          document.getElementById('profile-club-input').value = currentUserProfile.club || '';
+            
+          modal.classList.remove('hidden');
+        };
+
+        window.closeProfileModal = function() {
+          document.getElementById('profile-modal').classList.add('hidden');
+        };
+
+        async function handleProfileSave() {
+          if (!currentUserId) return;
+            
+          const newProfile = {
+            name: document.getElementById('profile-name-input').value.trim(),
+            position: document.getElementById('profile-position-input').value,
+            club: document.getElementById('profile-club-input').value.trim()
+          };
+            
+          try {
+            await updateDoc(doc(db, USERS_COLLECTION, currentUserId), newProfile);
+            closeProfileModal();
+            alert('Profile updated successfully!');
+          } catch (error) {
+            console.error("Error updating profile:", error);
+            alert('Failed to update profile');
+          }
+        }
+
+        window.switchView = function(view) {
+          ['home-view', 'feed-view', 'discover-view', 'highlights-view', 'chat-view'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+          });
+            
+          const viewEl = document.getElementById(view + '-view');
+          if (viewEl) viewEl.classList.remove('hidden');
+            
+          document.querySelectorAll('.view-btn').forEach(btn => {
+            const btnView = btn.getAttribute('data-view');
+            const isMobile = window.innerWidth < 640;
+            
+            if (btnView === view) {
+              btn.classList.add('active-nav');
+              if (isMobile) {
+                btn.classList.remove('text-gray-500');
+                btn.classList.add('text-primary');
+              } else {
+                btn.classList.remove('text-gray-300');
+                btn.classList.add('text-white');
+              }
+            } else {
+              btn.classList.remove('active-nav');
+              if (isMobile) {
+                btn.classList.remove('text-primary');
+                btn.classList.add('text-gray-500');
+              } else {
+                btn.classList.remove('text-white');
+                btn.classList.add('text-gray-300');
+              }
+            }
+          });
+          
+          if (view === 'chat') {
+            renderChatList();
+          }
+            
+          lucide.createIcons();
+        };
+
+        function formatTime(date) {
+          const now = new Date();
+          const diff = now - date;
+          const minutes = Math.floor(diff / 60000);
+          const hours = Math.floor(diff / 3600000);
+          const days = Math.floor(diff / 86400000);
+            
+          if (minutes < 1) return 'Just now';
+          if (minutes < 60) return `${minutes}m ago`;
+          if (hours < 24) return `${hours}h ago`;
+          if (days < 7) return `${days}d ago`;
+          return date.toLocaleDateString();
+        }
+
+        function escapeHtml(text) {
+          if (!text) return '';
+          const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+          };
+          return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+        
         // --- REST OF THE UNCHANGED FUNCTIONS ---
 
         function renderDiscoverPage(){
@@ -1597,6 +1717,27 @@
           }
         };
 
+        window.handlePasswordResetPrompt = function() {
+            const email = prompt("Enter your email address to receive a password reset link:");
+            if (email) {
+                handlePasswordReset(email.trim());
+            }
+        };
+
+        async function handlePasswordReset(email) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.classList.add('hidden');
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert(`Password reset link sent to ${email}. Check your inbox!`);
+            } catch (error) {
+                console.error("Password reset error:", error);
+                errorEl.textContent = error.message || 'Failed to send reset link. Please try again or check the email address.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+
         function listenToHighlights(){
           const loadingEl = document.getElementById('highlights-loading');
             
@@ -1881,5 +2022,6 @@
           };
           return String(text).replace(/[&<>"']/g, m => map[m]);
         }
-
     </script>
+</body>
+</html>
