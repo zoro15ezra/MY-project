@@ -137,9 +137,11 @@
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <input type="password" id="login-password" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                        <button type="button" onclick="handlePasswordResetPrompt()" class="text-xs text-green-600 font-semibold hover:text-green-700 mt-2 block float-right">
-                            Forgot Password?
-                        </button>
+                        <div class="flex justify-end mt-1">
+                            <button type="button" onclick="handlePasswordResetPrompt()" class="text-xs text-green-600 font-semibold hover:text-green-700">
+                                Forgot Password?
+                            </button>
+                        </div>
                     </div>
                     <button type="submit" class="w-full bg-green-600 text-white font-bold py-3 rounded-full hover:bg-green-700 transition duration-200">
                         Log In
@@ -908,8 +910,7 @@
             alert('Failed to send message: ' + error.message);
           }
         };
-        
-        // --- NEW FORGOT PASSWORD FEATURE ---
+
         window.handlePasswordResetPrompt = function() {
             const email = prompt("Enter your email address to receive a password reset link:");
             if (email) {
@@ -930,7 +931,6 @@
                 errorEl.classList.remove('hidden');
             }
         }
-        // --- END NEW FEATURE ---
         
         function renderMessages(messages) {
           const container = document.getElementById('messages-container');
@@ -1072,7 +1072,7 @@
           return String(text).replace(/[&<>"']/g, m => map[m]);
         }
         
-        // --- REST OF THE UNCHANGED FUNCTIONS ---
+        // --- EXISTING FUNCTIONS (Unchanged from previous successful update) ---
 
         function renderDiscoverPage(){
           const container = document.getElementById('discover-container');
@@ -1371,7 +1371,7 @@
                 const card = document.createElement('a');
                 card.href = highlight.videoUrl || '#';
                 card.target = '_blank';
-                card.className = 'aspect-[9/16] bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group hover:scale-105 transition';
+                card.className = 'aspect-[9/16] bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
                 card.innerHTML = `
                   <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
                   <i data-lucide="play-circle" class="w-10 h-10 mb-2 relative z-10"></i>
@@ -1443,11 +1443,16 @@
           const password = document.getElementById('login-password').value;
           const errorEl = document.getElementById('auth-error');
             
+          // Clear previous error message at the start of login attempt
+          errorEl.classList.add('hidden');
+          errorEl.textContent = '';
+            
           try {
             await signInWithEmailAndPassword(auth, email, password);
           } catch (error) {
             console.error("Login error:", error);
-            errorEl.textContent = error.message || 'Failed to log in. Please check your credentials.';
+            // Display the specific Firebase error (e.g., 'Firebase: Error (auth/invalid-credential).')
+            errorEl.textContent = error.message.replace('Firebase: Error (auth/', '').replace(').', '') || 'Login failed. Check your password.';
             errorEl.classList.remove('hidden');
           }
         };
@@ -1737,6 +1742,629 @@
                 errorEl.classList.remove('hidden');
             }
         }
+        
+        function renderMessages(messages) {
+          const container = document.getElementById('messages-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (messages.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 py-8"><p>No messages yet. Start the conversation!</p></div>';
+            return;
+          }
+            
+          messages.forEach(msg => {
+            const msgDiv = document.createElement('div');
+            const isOwn = msg.userId === currentUserId;
+            
+            msgDiv.className = `flex ${isOwn ? 'justify-end' : 'justify-start'}`;
+            
+            let dateObj;
+            if (msg.timestamp && msg.timestamp.toDate) {
+                dateObj = msg.timestamp.toDate();
+            } else if (msg.timestamp && msg.timestamp.seconds) {
+                dateObj = new Date(msg.timestamp.seconds * 1000);
+            } else {
+                dateObj = new Date(); 
+            }
+
+            msgDiv.innerHTML = `
+              <div class="max-w-xs ${isOwn ? 'bg-green-600 text-white' : 'bg-slate-100 text-gray-800'} rounded-lg p-3">
+                <p class="text-xs font-semibold mb-1">${escapeHtml(msg.username || 'Player')}</p>
+                <p class="text-sm">${escapeHtml(msg.content || '')}</p>
+                <p class="text-xs opacity-70 mt-1">${formatTime(dateObj)}</p>
+              </div>
+            `;
+            
+            container.appendChild(msgDiv);
+          });
+            
+          container.scrollTop = container.scrollHeight;
+        }
+
+        window.openProfileModal = function() {
+          const modal = document.getElementById('profile-modal');
+            
+          document.getElementById('profile-name-input').value = currentUserProfile.name || '';
+          document.getElementById('profile-position-input').value = currentUserProfile.position || 'Unspecified';
+          document.getElementById('profile-club-input').value = currentUserProfile.club || '';
+            
+          modal.classList.remove('hidden');
+        };
+
+        window.closeProfileModal = function() {
+          document.getElementById('profile-modal').classList.add('hidden');
+        };
+
+        async function handleProfileSave() {
+          if (!currentUserId) return;
+            
+          const newProfile = {
+            name: document.getElementById('profile-name-input').value.trim(),
+            position: document.getElementById('profile-position-input').value,
+            club: document.getElementById('profile-club-input').value.trim()
+          };
+            
+          try {
+            await updateDoc(doc(db, USERS_COLLECTION, currentUserId), newProfile);
+            closeProfileModal();
+            alert('Profile updated successfully!');
+          } catch (error) {
+            console.error("Error updating profile:", error);
+            alert('Failed to update profile');
+          }
+        }
+
+        window.switchView = function(view) {
+          ['home-view', 'feed-view', 'discover-view', 'highlights-view', 'chat-view'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+          });
+            
+          const viewEl = document.getElementById(view + '-view');
+          if (viewEl) viewEl.classList.remove('hidden');
+            
+          document.querySelectorAll('.view-btn').forEach(btn => {
+            const btnView = btn.getAttribute('data-view');
+            const isMobile = window.innerWidth < 640;
+            
+            if (btnView === view) {
+              btn.classList.add('active-nav');
+              if (isMobile) {
+                btn.classList.remove('text-gray-500');
+                btn.classList.add('text-primary');
+              } else {
+                btn.classList.remove('text-gray-300');
+                btn.classList.add('text-white');
+              }
+            } else {
+              btn.classList.remove('active-nav');
+              if (isMobile) {
+                btn.classList.remove('text-primary');
+                btn.classList.add('text-gray-500');
+              } else {
+                btn.classList.remove('text-white');
+                btn.classList.add('text-gray-300');
+              }
+            }
+          });
+          
+          if (view === 'chat') {
+            renderChatList();
+          }
+            
+          lucide.createIcons();
+        };
+
+        function formatTime(date) {
+          const now = new Date();
+          const diff = now - date;
+          const minutes = Math.floor(diff / 60000);
+          const hours = Math.floor(diff / 3600000);
+          const days = Math.floor(diff / 86400000);
+            
+          if (minutes < 1) return 'Just now';
+          if (minutes < 60) return `${minutes}m ago`;
+          if (hours < 24) return `${hours}h ago`;
+          if (days < 7) return `${days}d ago`;
+          return date.toLocaleDateString();
+        }
+
+        function escapeHtml(text) {
+          if (!text) return '';
+          const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+          };
+          return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        // --- EXISTING FUNCTIONS (Unchanged from previous successful update) ---
+
+        function renderDiscoverPage(){
+          const container = document.getElementById('discover-container');
+          const loading = document.getElementById('discover-loading');
+          if (!container) return;
+            
+          if (loading) loading.style.display = 'none';
+          container.innerHTML = '';
+            
+          const otherUsers = allUsers.filter(u => u.id !== currentUserId);
+            
+          if (otherUsers.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><p>No players to discover yet. Be patient!</p></div>';
+            return;
+          }
+            
+          otherUsers.forEach(user => {
+            const isFollowing = (currentUserProfile.following || []).includes(user.id);
+            
+            const card = document.createElement('div');
+            card.className = 'user-card bg-white p-6 rounded-xl shadow-lg border border-slate-200 transition duration-200 cursor-pointer';
+            
+            card.innerHTML = `
+              <div class="flex items-start justify-between mb-4" onclick="viewUserProfile('${user.id}')">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-lg">
+                    ${(user.name || 'P')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-900 cursor-pointer hover:text-green-600">${escapeHtml(user.name || 'Player')}</h4>
+                    <p class="text-sm text-gray-600">${escapeHtml(user.position || 'Player')}</p>
+                    ${user.club ? `<p class="text-xs text-gray-500">${escapeHtml(user.club)}</p>` : ''}
+                  </div>
+                </div>
+              </div>
+                
+              <div class="flex gap-2 text-xs text-gray-600 mb-4">
+                <span><strong>${(user.followers || []).length}</strong> Followers</span>
+                <span>•</span>
+                <span><strong>${(user.following || []).length}</strong> Following</span>
+              </div>
+                
+              <button 
+                onclick="event.stopPropagation(); toggleFollow('${user.id}')" 
+                class="w-full py-2 px-4 rounded-full font-semibold transition duration-150 ${
+                  isFollowing 
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }"
+              >
+                ${isFollowing ? 'Following' : 'Follow'}
+              </button>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
+
+        window.toggleFollow = async function(targetUserId) {
+          if (!currentUserId) {
+            alert('Please log in first');
+            return;
+          }
+            
+          if (currentUserId === targetUserId) {
+            alert('You cannot follow yourself');
+            return;
+          }
+            
+          const myRef = doc(db, USERS_COLLECTION, currentUserId);
+          const targetRef = doc(db, USERS_COLLECTION, targetUserId);
+            
+          try {
+            const isFollowing = (currentUserProfile.following || []).includes(targetUserId);
+            
+            if (isFollowing) {
+              await updateDoc(myRef, {
+                following: arrayRemove(targetUserId)
+              });
+              
+              await updateDoc(targetRef, {
+                followers: arrayRemove(currentUserId)
+              });
+            } else {
+              await updateDoc(myRef, {
+                following: arrayUnion(targetUserId)
+              });
+              
+              await updateDoc(targetRef, {
+                followers: arrayUnion(currentUserId)
+              });
+            }
+          } catch (error) {
+            console.error("Error toggling follow:", error);
+            alert('Failed to update follow status. Please check Firestore Rules: ' + error.message);
+          }
+        };
+
+        window.showFollowersModal = async function() {
+          const modal = document.getElementById('followers-modal');
+          const list = document.getElementById('followers-list');
+            
+          modal.classList.remove('hidden');
+          list.innerHTML = '<p class="text-gray-500 text-center">Loading...</p>';
+            
+          const followerIds = currentUserProfile.followers || [];
+            
+          if (followerIds.length === 0) {
+            list.innerHTML = '<p class="text-gray-500 text-center">No followers yet</p>';
+            return;
+          }
+            
+          list.innerHTML = '';
+            
+          for (const userId of followerIds) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+              const userEl = document.createElement('div');
+              userEl.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition';
+              userEl.innerHTML = `
+                <div class="flex items-center gap-3" onclick="viewUserProfile('${user.id}')">
+                  <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+                    ${(user.name || 'P')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900">${escapeHtml(user.name || 'Player')}</p>
+                    <p class="text-xs text-gray-600">${escapeHtml(user.position || '')}</p>
+                  </div>
+                </div>
+              `;
+              list.appendChild(userEl);
+            }
+          }
+            
+          lucide.createIcons();
+        };
+
+        window.showFollowingModal = async function() {
+          const modal = document.getElementById('following-modal');
+          const list = document.getElementById('following-list');
+            
+          modal.classList.remove('hidden');
+          list.innerHTML = '<p class="text-gray-500 text-center">Loading...</p>';
+            
+          const followingIds = currentUserProfile.following || [];
+            
+          if (followingIds.length === 0) {
+            list.innerHTML = '<p class="text-gray-500 text-center">Not following anyone yet</p>';
+            return;
+          }
+            
+          list.innerHTML = '';
+            
+          for (const userId of followingIds) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+              const isFollowing = (currentUserProfile.following || []).includes(userId);
+              const userEl = document.createElement('div');
+              userEl.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition';
+              userEl.innerHTML = `
+                <div class="flex items-center gap-3 cursor-pointer" onclick="viewUserProfile('${userId}')">
+                  <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+                    ${(user.name || 'P')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900">${escapeHtml(user.name || 'Player')}</p>
+                    <p class="text-xs text-gray-600">${escapeHtml(user.position || '')}</p>
+                  </div>
+                </div>
+                <button 
+                  onclick="event.stopPropagation(); toggleFollow('${userId}')" 
+                  class="py-1 px-3 rounded-full text-sm font-semibold ${
+                    isFollowing 
+                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                    }"
+                >
+                  ${isFollowing ? 'Unfollow' : 'Follow'}
+                </button>
+              `;
+              list.appendChild(userEl);
+            }
+          }
+            
+          lucide.createIcons();
+        };
+
+        window.closeFollowersModal = function() {
+          document.getElementById('followers-modal').classList.add('hidden');
+        };
+
+        window.closeFollowingModal = function() {
+          document.getElementById('following-modal').classList.add('hidden');
+        };
+
+        window.viewUserProfile = async function(userId) {
+          viewingUserId = userId;
+          const modal = document.getElementById('user-profile-modal');
+            
+          try {
+            const userDoc = await getDoc(doc(db, USERS_COLLECTION, userId));
+            if (!userDoc.exists()) {
+              alert('User not found');
+              return;
+            }
+            
+            const userData = userDoc.data();
+            
+            // Update profile header
+            document.getElementById('user-profile-avatar').textContent = (userData.name || 'P')[0].toUpperCase();
+            document.getElementById('user-profile-name').textContent = userData.name || 'Player';
+            document.getElementById('user-profile-position').textContent = userData.position || 'Player';
+            document.getElementById('user-profile-club').textContent = userData.club || 'Club not specified';
+            document.getElementById('user-profile-followers-count').textContent = (userData.followers || []).length;
+            document.getElementById('user-profile-following-count').textContent = (userData.following || []).length;
+            
+            // Update follow button
+            const isFollowing = (currentUserProfile.following || []).includes(userId);
+            const followBtn = document.getElementById('user-profile-follow-btn');
+            followBtn.textContent = isFollowing ? 'Following' : 'Follow';
+            followBtn.className = `font-semibold py-2 px-6 rounded-full transition duration-150 ${
+              isFollowing 
+                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                : 'bg-white text-green-600 hover:bg-gray-100'
+            }`;
+            
+            // Load user's posts
+            let posts = [];
+            try {
+              const postsQuery = query(
+                collection(db, POSTS_COLLECTION),
+                orderBy('timestamp', 'desc')
+              );
+              const postsSnap = await getDocs(postsQuery);
+              postsSnap.forEach(d => {
+                const postData = d.data();
+                if (postData.userId === userId) {
+                  posts.push({ id: d.id, ...postData });
+                }
+              });
+            } catch (error) {
+              console.error('Error loading posts:', error);
+            }
+            
+            document.getElementById('user-profile-posts-count').textContent = posts.length;
+            
+            const postsContainer = document.getElementById('user-profile-posts');
+            postsContainer.innerHTML = '';
+            
+            if (posts.length === 0) {
+              postsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No posts yet</p>';
+            } else {
+              posts.forEach(post => {
+                const postCard = document.createElement('div');
+                postCard.className = 'bg-slate-50 p-4 rounded-lg border border-slate-200';
+                const timeStr = post.timestamp ? formatTime(post.timestamp.toDate()) : 'Just now';
+                postCard.innerHTML = `
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs text-gray-500">${timeStr}</span>
+                  </div>
+                  <p class="text-gray-800">${escapeHtml(post.content || '')}</p>
+                `;
+                postsContainer.appendChild(postCard);
+              });
+            }
+            
+            // Load user's highlights
+            let highlights = [];
+            try {
+              const highlightsQuery = query(
+                collection(db, HIGHLIGHTS_COLLECTION),
+                orderBy('timestamp', 'desc')
+              );
+              const highlightsSnap = await getDocs(highlightsQuery);
+              highlightsSnap.forEach(d => {
+                const highlightData = d.data();
+                if (highlightData.userId === userId) {
+                  highlights.push({ id: d.id, ...highlightData });
+                }
+              });
+            } catch (error) {
+              console.error('Error loading highlights:', error);
+            }
+            
+            document.getElementById('user-profile-highlights-count').textContent = highlights.length;
+            
+            const highlightsContainer = document.getElementById('user-profile-highlights');
+            highlightsContainer.innerHTML = '';
+            
+            if (highlights.length === 0) {
+              highlightsContainer.innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">No highlights yet</p>';
+            } else {
+              highlights.forEach(highlight => {
+                const card = document.createElement('a');
+                card.href = highlight.videoUrl || '#';
+                card.target = '_blank';
+                card.className = 'aspect-[9/16] bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
+                card.innerHTML = `
+                  <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+                  <i data-lucide="play-circle" class="w-10 h-10 mb-2 relative z-10"></i>
+                  <p class="text-xs font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+                `;
+                highlightsContainer.appendChild(card);
+              });
+            }
+            
+            modal.classList.remove('hidden');
+            switchProfileTab('posts');
+            lucide.createIcons();
+            
+          } catch (error) {
+            console.error('Error loading user profile:', error);
+            alert('Failed to load user profile: ' + error.message);
+          }
+        };
+
+        window.closeUserProfileModal = function() {
+          document.getElementById('user-profile-modal').classList.add('hidden');
+          viewingUserId = null;
+        };
+
+        window.switchProfileTab = function(tab) {
+          document.querySelectorAll('.profile-tab').forEach(btn => {
+            if (btn.getAttribute('data-tab') === tab) {
+              btn.className = 'profile-tab flex-1 py-3 px-4 text-center font-semibold text-green-600 border-b-2 border-green-600';
+            } else {
+              btn.className = 'profile-tab flex-1 py-3 px-4 text-center font-semibold text-gray-500 hover:text-gray-700';
+            }
+          });
+            
+          if (tab === 'posts') {
+            document.getElementById('profile-posts-tab').classList.remove('hidden');
+            document.getElementById('profile-highlights-tab').classList.add('hidden');
+          } else {
+            document.getElementById('profile-posts-tab').classList.add('hidden');
+            document.getElementById('profile-highlights-tab').classList.remove('hidden');
+          }
+            
+          lucide.createIcons();
+        };
+
+        window.toggleFollowFromProfile = async function() {
+          if (viewingUserId) {
+            await toggleFollow(viewingUserId);
+            // Refresh the profile view to update follow button
+            await viewUserProfile(viewingUserId);
+          }
+        };
+
+        window.showLoginForm = function() {
+          document.getElementById('login-form').classList.remove('hidden');
+          document.getElementById('register-form').classList.add('hidden');
+          document.getElementById('auth-error').classList.add('hidden');
+        };
+
+        window.showRegisterForm = function() {
+          document.getElementById('login-form').classList.add('hidden');
+          document.getElementById('register-form').classList.remove('hidden');
+          document.getElementById('auth-error').classList.add('hidden');
+        };
+
+        window.handleLogin = async function(event) {
+          event.preventDefault();
+            
+          const email = document.getElementById('login-email').value;
+          const password = document.getElementById('login-password').value;
+          const errorEl = document.getElementById('auth-error');
+            
+          // Clear previous error message at the start of login attempt
+          errorEl.classList.add('hidden');
+          errorEl.textContent = '';
+            
+          try {
+            await signInWithEmailAndPassword(auth, email, password);
+          } catch (error) {
+            console.error("Login error:", error);
+            // Display the specific Firebase error (e.g., 'auth/invalid-credential')
+            errorEl.textContent = error.message.replace('Firebase: Error (auth/', '').replace(').', '') || 'Login failed. Check your password.';
+            errorEl.classList.remove('hidden');
+          }
+        };
+
+        window.handleRegister = async function(event) {
+          event.preventDefault();
+            
+          const name = document.getElementById('register-name').value;
+          const email = document.getElementById('register-email').value;
+          const password = document.getElementById('register-password').value;
+          const position = document.getElementById('register-position').value;
+          const errorEl = document.getElementById('auth-error');
+            
+          try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            
+            await setDoc(doc(db, USERS_COLLECTION, user.uid), {
+              name: name,
+              position: position,
+              club: '',
+              followers: [],
+              following: [],
+              createdAt: serverTimestamp()
+            });
+            
+          } catch (error) {
+            console.error("Register error:", error);
+            errorEl.textContent = error.message || 'Failed to create account. Please try again.';
+            errorEl.classList.remove('hidden');
+          }
+        };
+
+        window.handleLogout = async function() {
+          try {
+            await signOut(auth);
+          } catch (error) {
+            console.error("Logout error:", error);
+            alert('Failed to log out');
+          }
+        };
+
+        function listenToFeed(){
+          const loadingEl = document.getElementById('loading-indicator');
+            
+          try {
+            const q = query(collection(db, POSTS_COLLECTION), orderBy('timestamp', 'desc'));
+            onSnapshot(q, snap => {
+              const posts = [];
+              snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
+              renderFeed(posts);
+              if (loadingEl) loadingEl.style.display = 'none';
+            }, err => {
+              console.error("Feed error:", err);
+              if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500">Error loading feed.</p>';
+            });
+          } catch (e) {
+            console.error(e);
+            if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500">Error initializing feed.</p>';
+          }
+        }
+
+        function renderFeed(posts){
+          const container = document.getElementById('feed-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (posts.length === 0) {
+            container.innerHTML = '<div class="bg-white p-8 rounded-xl text-center text-gray-500 shadow-lg border border-slate-200"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No posts yet. Be the first to share!</p></div>';
+            lucide.createIcons();
+            return;
+          }
+            
+          posts.forEach(post => {
+            const card = document.createElement('div');
+            card.className = 'bg-white p-6 rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition duration-150';
+            
+            const timeStr = post.timestamp ? formatTime(post.timestamp.toDate()) : 'Just now';
+            
+            card.innerHTML = `
+              <div class="flex items-start gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold cursor-pointer" onclick="viewUserProfile('${post.userId}')">
+                  ${(post.username || 'A')[0].toUpperCase()}
+                </div>
+                <div class="flex-grow">
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-bold text-gray-900 cursor-pointer hover:text-green-600" onclick="viewUserProfile('${post.userId}')">${escapeHtml(post.username || 'Anonymous Player')}</h4>
+                    <span class="text-xs text-gray-400">${timeStr}</span>
+                  </div>
+                  <p class="text-sm text-gray-600">${escapeHtml(post.position || '')} ${post.club ? '• ' + escapeHtml(post.club) : ''}</p>
+                </div>
+              </div>
+              <p class="text-gray-800 whitespace-pre-wrap">${escapeHtml(post.content || '')}</p>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
 
         function listenToHighlights(){
           const loadingEl = document.getElementById('highlights-loading');
@@ -1921,6 +2549,1505 @@
           } catch (e) {
             console.error(e);
           }
+        }
+
+        function renderHighlights(highlights){
+          const container = document.getElementById('highlights-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (highlights.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><i data-lucide="video-off" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No highlights yet. Upload yours!</p></div>';
+            lucide.createIcons();
+            return;
+          }
+            
+          highlights.forEach(highlight => {
+            const card = document.createElement('a');
+            card.href = highlight.videoUrl || '#';
+            card.target = '_blank';
+            card.className = 'highlight-card bg-gradient-to-br from-slate-700 to-slate-900 flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
+            
+            card.innerHTML = `
+              <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+              <i data-lucide="play-circle" class="w-12 h-12 mb-2 relative z-10 group-hover:scale-110 transition duration-200"></i>
+              <p class="text-sm font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+              <p class="text-xs text-gray-300 mt-1 relative z-10">${escapeHtml(highlight.username || 'Player')}</p>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
+
+        window.handlePost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const content = document.getElementById('post-content').value.trim();
+          if (!content) return;
+            
+          const btn = document.getElementById('post-button');
+          btn.disabled = true;
+          btn.textContent = 'Posting...';
+            
+          try {
+            await addDoc(collection(db, POSTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              position: currentUserProfile.position,
+              club: currentUserProfile.club,
+              content: content,
+              timestamp: serverTimestamp()
+            });
+            
+            document.getElementById('post-content').value = '';
+            btn.textContent = 'Post Update';
+            
+          } catch (error) {
+            console.error("Error posting:", error);
+            alert('Failed to post. Please try again.');
+            btn.textContent = 'Post Update';
+            btn.disabled = false;
+          }
+        };
+
+        window.handleHighlightPost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const fileInput = document.getElementById('highlight-file');
+          const urlInput = document.getElementById('highlight-url');
+          const titleInput = document.getElementById('highlight-title');
+          const errorEl = document.getElementById('highlight-error');
+          const btn = document.getElementById('highlight-post-button');
+            
+          const file = fileInput.files[0];
+          const url = urlInput.value.trim();
+          const title = titleInput.value.trim() || 'My Highlight';
+            
+          if (!file && !url) {
+            errorEl.classList.remove('hidden');
+            return;
+          }
+            
+          errorEl.classList.add('hidden');
+          btn.disabled = true;
+          btn.textContent = 'Processing...';
+            
+          try {
+            let videoUrl = url;
+            
+            if (file) {
+              const fileExtension = file.name.split('.').pop();
+              const fileName = `${Date.now()}_${title.replace(/\s/g, '_')}.${fileExtension}`;
+              
+              const storagePath = `highlights/${currentUserId}/${fileName}`; 
+              const fileRef = storageRef(storage, storagePath);
+              const uploadTask = uploadBytesResumable(fileRef, file);
+              
+              await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', 
+                  (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    btn.textContent = `Uploading... ${Math.round(progress)}%`;
+                  },
+                  (error) => {
+                    console.error("Storage Error:", error);
+                    reject(new Error(`Upload failed: ${error.message}`));
+                  },
+                  async () => {
+                    try {
+                      videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                      resolve();
+                    } catch(e) {
+                        console.error("Download URL Error:", e);
+                        reject(new Error("Failed to get video URL."));
+                    }
+                  }
+                );
+              });
+            }
+            
+            await addDoc(collection(db, HIGHLIGHTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              title: title,
+              videoUrl: videoUrl, 
+              timestamp: serverTimestamp()
+            });
+            
+            fileInput.value = '';
+            urlInput.value = '';
+            titleInput.value = '';
+            document.getElementById('file-upload-label').textContent = 'Select a video file';
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+            
+            alert('Highlight shared successfully!');
+            
+          } catch (error) {
+            console.error("Error uploading highlight:", error);
+            alert('Failed to upload highlight. Please try again. Check Storage Rules! Error: ' + error.message);
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+          }
+        };
+
+        function listenToHighlights(){
+          const loadingEl = document.getElementById('highlights-loading');
+            
+          try {
+            const q = query(collection(db, HIGHLIGHTS_COLLECTION), orderBy('timestamp', 'desc'));
+            onSnapshot(q, snap => {
+              const highlights = [];
+              snap.forEach(d => highlights.push({ id: d.id, ...d.data() }));
+              renderHighlights(highlights);
+              if (loadingEl) loadingEl.style.display = 'none';
+            }, err => {
+              console.error("Highlights error:", err);
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        function renderHighlights(highlights){
+          const container = document.getElementById('highlights-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (highlights.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><i data-lucide="video-off" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No highlights yet. Upload yours!</p></div>';
+            lucide.createIcons();
+            return;
+          }
+            
+          highlights.forEach(highlight => {
+            const card = document.createElement('a');
+            card.href = highlight.videoUrl || '#';
+            card.target = '_blank';
+            card.className = 'highlight-card bg-gradient-to-br from-slate-700 to-slate-900 flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
+            
+            card.innerHTML = `
+              <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+              <i data-lucide="play-circle" class="w-12 h-12 mb-2 relative z-10 group-hover:scale-110 transition duration-200"></i>
+              <p class="text-sm font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+              <p class="text-xs text-gray-300 mt-1 relative z-10">${escapeHtml(highlight.username || 'Player')}</p>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
+
+        window.handlePost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const content = document.getElementById('post-content').value.trim();
+          if (!content) return;
+            
+          const btn = document.getElementById('post-button');
+          btn.disabled = true;
+          btn.textContent = 'Posting...';
+            
+          try {
+            await addDoc(collection(db, POSTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              position: currentUserProfile.position,
+              club: currentUserProfile.club,
+              content: content,
+              timestamp: serverTimestamp()
+            });
+            
+            document.getElementById('post-content').value = '';
+            btn.textContent = 'Post Update';
+            
+          } catch (error) {
+            console.error("Error posting:", error);
+            alert('Failed to post. Please try again.');
+            btn.textContent = 'Post Update';
+            btn.disabled = false;
+          }
+        };
+
+        window.handleHighlightPost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const fileInput = document.getElementById('highlight-file');
+          const urlInput = document.getElementById('highlight-url');
+          const titleInput = document.getElementById('highlight-title');
+          const errorEl = document.getElementById('highlight-error');
+          const btn = document.getElementById('highlight-post-button');
+            
+          const file = fileInput.files[0];
+          const url = urlInput.value.trim();
+          const title = titleInput.value.trim() || 'My Highlight';
+            
+          if (!file && !url) {
+            errorEl.classList.remove('hidden');
+            return;
+          }
+            
+          errorEl.classList.add('hidden');
+          btn.disabled = true;
+          btn.textContent = 'Processing...';
+            
+          try {
+            let videoUrl = url;
+            
+            if (file) {
+              const fileExtension = file.name.split('.').pop();
+              const fileName = `${Date.now()}_${title.replace(/\s/g, '_')}.${fileExtension}`;
+              
+              const storagePath = `highlights/${currentUserId}/${fileName}`; 
+              const fileRef = storageRef(storage, storagePath);
+              const uploadTask = uploadBytesResumable(fileRef, file);
+              
+              await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', 
+                  (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    btn.textContent = `Uploading... ${Math.round(progress)}%`;
+                  },
+                  (error) => {
+                    console.error("Storage Error:", error);
+                    reject(new Error(`Upload failed: ${error.message}`));
+                  },
+                  async () => {
+                    try {
+                      videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                      resolve();
+                    } catch(e) {
+                        console.error("Download URL Error:", e);
+                        reject(new Error("Failed to get video URL."));
+                    }
+                  }
+                );
+              });
+            }
+            
+            await addDoc(collection(db, HIGHLIGHTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              title: title,
+              videoUrl: videoUrl, 
+              timestamp: serverTimestamp()
+            });
+            
+            fileInput.value = '';
+            urlInput.value = '';
+            titleInput.value = '';
+            document.getElementById('file-upload-label').textContent = 'Select a video file';
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+            
+            alert('Highlight shared successfully!');
+            
+          } catch (error) {
+            console.error("Error uploading highlight:", error);
+            alert('Failed to upload highlight. Please try again. Check Storage Rules! Error: ' + error.message);
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+          }
+        };
+
+        function listenToHighlights(){
+          const loadingEl = document.getElementById('highlights-loading');
+            
+          try {
+            const q = query(collection(db, HIGHLIGHTS_COLLECTION), orderBy('timestamp', 'desc'));
+            onSnapshot(q, snap => {
+              const highlights = [];
+              snap.forEach(d => highlights.push({ id: d.id, ...d.data() }));
+              renderHighlights(highlights);
+              if (loadingEl) loadingEl.style.display = 'none';
+            }, err => {
+              console.error("Highlights error:", err);
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        function renderHighlights(highlights){
+          const container = document.getElementById('highlights-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (highlights.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><i data-lucide="video-off" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No highlights yet. Upload yours!</p></div>';
+            lucide.createIcons();
+            return;
+          }
+            
+          highlights.forEach(highlight => {
+            const card = document.createElement('a');
+            card.href = highlight.videoUrl || '#';
+            card.target = '_blank';
+            card.className = 'highlight-card bg-gradient-to-br from-slate-700 to-slate-900 flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
+            
+            card.innerHTML = `
+              <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+              <i data-lucide="play-circle" class="w-12 h-12 mb-2 relative z-10 group-hover:scale-110 transition duration-200"></i>
+              <p class="text-sm font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+              <p class="text-xs text-gray-300 mt-1 relative z-10">${escapeHtml(highlight.username || 'Player')}</p>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
+
+        window.handlePost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const content = document.getElementById('post-content').value.trim();
+          if (!content) return;
+            
+          const btn = document.getElementById('post-button');
+          btn.disabled = true;
+          btn.textContent = 'Posting...';
+            
+          try {
+            await addDoc(collection(db, POSTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              position: currentUserProfile.position,
+              club: currentUserProfile.club,
+              content: content,
+              timestamp: serverTimestamp()
+            });
+            
+            document.getElementById('post-content').value = '';
+            btn.textContent = 'Post Update';
+            
+          } catch (error) {
+            console.error("Error posting:", error);
+            alert('Failed to post. Please try again.');
+            btn.textContent = 'Post Update';
+            btn.disabled = false;
+          }
+        };
+
+        window.handleHighlightPost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const fileInput = document.getElementById('highlight-file');
+          const urlInput = document.getElementById('highlight-url');
+          const titleInput = document.getElementById('highlight-title');
+          const errorEl = document.getElementById('highlight-error');
+          const btn = document.getElementById('highlight-post-button');
+            
+          const file = fileInput.files[0];
+          const url = urlInput.value.trim();
+          const title = titleInput.value.trim() || 'My Highlight';
+            
+          if (!file && !url) {
+            errorEl.classList.remove('hidden');
+            return;
+          }
+            
+          errorEl.classList.add('hidden');
+          btn.disabled = true;
+          btn.textContent = 'Processing...';
+            
+          try {
+            let videoUrl = url;
+            
+            if (file) {
+              const fileExtension = file.name.split('.').pop();
+              const fileName = `${Date.now()}_${title.replace(/\s/g, '_')}.${fileExtension}`;
+              
+              const storagePath = `highlights/${currentUserId}/${fileName}`; 
+              const fileRef = storageRef(storage, storagePath);
+              const uploadTask = uploadBytesResumable(fileRef, file);
+              
+              await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', 
+                  (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    btn.textContent = `Uploading... ${Math.round(progress)}%`;
+                  },
+                  (error) => {
+                    console.error("Storage Error:", error);
+                    reject(new Error(`Upload failed: ${error.message}`));
+                  },
+                  async () => {
+                    try {
+                      videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                      resolve();
+                    } catch(e) {
+                        console.error("Download URL Error:", e);
+                        reject(new Error("Failed to get video URL."));
+                    }
+                  }
+                );
+              });
+            }
+            
+            await addDoc(collection(db, HIGHLIGHTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              title: title,
+              videoUrl: videoUrl, 
+              timestamp: serverTimestamp()
+            });
+            
+            fileInput.value = '';
+            urlInput.value = '';
+            titleInput.value = '';
+            document.getElementById('file-upload-label').textContent = 'Select a video file';
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+            
+            alert('Highlight shared successfully!');
+            
+          } catch (error) {
+            console.error("Error uploading highlight:", error);
+            alert('Failed to upload highlight. Please try again. Check Storage Rules! Error: ' + error.message);
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+          }
+        };
+
+        window.handlePasswordResetPrompt = function() {
+            const email = prompt("Enter your email address to receive a password reset link:");
+            if (email) {
+                handlePasswordReset(email.trim());
+            }
+        };
+
+        async function handlePasswordReset(email) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.classList.add('hidden');
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert(`Password reset link sent to ${email}. Check your inbox!`);
+            } catch (error) {
+                console.error("Password reset error:", error);
+                errorEl.textContent = error.message || 'Failed to send reset link. Please try again or check the email address.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+        
+        function renderMessages(messages) {
+          const container = document.getElementById('messages-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (messages.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 py-8"><p>No messages yet. Start the conversation!</p></div>';
+            return;
+          }
+            
+          messages.forEach(msg => {
+            const msgDiv = document.createElement('div');
+            const isOwn = msg.userId === currentUserId;
+            
+            msgDiv.className = `flex ${isOwn ? 'justify-end' : 'justify-start'}`;
+            
+            let dateObj;
+            if (msg.timestamp && msg.timestamp.toDate) {
+                dateObj = msg.timestamp.toDate();
+            } else if (msg.timestamp && msg.timestamp.seconds) {
+                dateObj = new Date(msg.timestamp.seconds * 1000);
+            } else {
+                dateObj = new Date(); 
+            }
+
+            msgDiv.innerHTML = `
+              <div class="max-w-xs ${isOwn ? 'bg-green-600 text-white' : 'bg-slate-100 text-gray-800'} rounded-lg p-3">
+                <p class="text-xs font-semibold mb-1">${escapeHtml(msg.username || 'Player')}</p>
+                <p class="text-sm">${escapeHtml(msg.content || '')}</p>
+                <p class="text-xs opacity-70 mt-1">${formatTime(dateObj)}</p>
+              </div>
+            `;
+            
+            container.appendChild(msgDiv);
+          });
+            
+          container.scrollTop = container.scrollHeight;
+        }
+
+        window.openProfileModal = function() {
+          const modal = document.getElementById('profile-modal');
+            
+          document.getElementById('profile-name-input').value = currentUserProfile.name || '';
+          document.getElementById('profile-position-input').value = currentUserProfile.position || 'Unspecified';
+          document.getElementById('profile-club-input').value = currentUserProfile.club || '';
+            
+          modal.classList.remove('hidden');
+        };
+
+        window.closeProfileModal = function() {
+          document.getElementById('profile-modal').classList.add('hidden');
+        };
+
+        async function handleProfileSave() {
+          if (!currentUserId) return;
+            
+          const newProfile = {
+            name: document.getElementById('profile-name-input').value.trim(),
+            position: document.getElementById('profile-position-input').value,
+            club: document.getElementById('profile-club-input').value.trim()
+          };
+            
+          try {
+            await updateDoc(doc(db, USERS_COLLECTION, currentUserId), newProfile);
+            closeProfileModal();
+            alert('Profile updated successfully!');
+          } catch (error) {
+            console.error("Error updating profile:", error);
+            alert('Failed to update profile');
+          }
+        }
+
+        window.switchView = function(view) {
+          ['home-view', 'feed-view', 'discover-view', 'highlights-view', 'chat-view'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.add('hidden');
+          });
+            
+          const viewEl = document.getElementById(view + '-view');
+          if (viewEl) viewEl.classList.remove('hidden');
+            
+          document.querySelectorAll('.view-btn').forEach(btn => {
+            const btnView = btn.getAttribute('data-view');
+            const isMobile = window.innerWidth < 640;
+            
+            if (btnView === view) {
+              btn.classList.add('active-nav');
+              if (isMobile) {
+                btn.classList.remove('text-gray-500');
+                btn.classList.add('text-primary');
+              } else {
+                btn.classList.remove('text-gray-300');
+                btn.classList.add('text-white');
+              }
+            } else {
+              btn.classList.remove('active-nav');
+              if (isMobile) {
+                btn.classList.remove('text-primary');
+                btn.classList.add('text-gray-500');
+              } else {
+                btn.classList.remove('text-white');
+                btn.classList.add('text-gray-300');
+              }
+            }
+          });
+          
+          if (view === 'chat') {
+            renderChatList();
+          }
+            
+          lucide.createIcons();
+        };
+
+        function formatTime(date) {
+          const now = new Date();
+          const diff = now - date;
+          const minutes = Math.floor(diff / 60000);
+          const hours = Math.floor(diff / 3600000);
+          const days = Math.floor(diff / 86400000);
+            
+          if (minutes < 1) return 'Just now';
+          if (minutes < 60) return `${minutes}m ago`;
+          if (hours < 24) return `${hours}h ago`;
+          if (days < 7) return `${days}d ago`;
+          return date.toLocaleDateString();
+        }
+
+        function escapeHtml(text) {
+          if (!text) return '';
+          const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+          };
+          return String(text).replace(/[&<>"']/g, m => map[m]);
+        }
+        
+        function renderDiscoverPage(){
+          const container = document.getElementById('discover-container');
+          const loading = document.getElementById('discover-loading');
+          if (!container) return;
+            
+          if (loading) loading.style.display = 'none';
+          container.innerHTML = '';
+            
+          const otherUsers = allUsers.filter(u => u.id !== currentUserId);
+            
+          if (otherUsers.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><p>No players to discover yet. Be patient!</p></div>';
+            return;
+          }
+            
+          otherUsers.forEach(user => {
+            const isFollowing = (currentUserProfile.following || []).includes(user.id);
+            
+            const card = document.createElement('div');
+            card.className = 'user-card bg-white p-6 rounded-xl shadow-lg border border-slate-200 transition duration-200 cursor-pointer';
+            
+            card.innerHTML = `
+              <div class="flex items-start justify-between mb-4" onclick="viewUserProfile('${user.id}')">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-full bg-green-600 flex items-center justify-center text-white font-bold text-lg">
+                    ${(user.name || 'P')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-gray-900 cursor-pointer hover:text-green-600">${escapeHtml(user.name || 'Player')}</h4>
+                    <p class="text-sm text-gray-600">${escapeHtml(user.position || 'Player')}</p>
+                    ${user.club ? `<p class="text-xs text-gray-500">${escapeHtml(user.club)}</p>` : ''}
+                  </div>
+                </div>
+              </div>
+                
+              <div class="flex gap-2 text-xs text-gray-600 mb-4">
+                <span><strong>${(user.followers || []).length}</strong> Followers</span>
+                <span>•</span>
+                <span><strong>${(user.following || []).length}</strong> Following</span>
+              </div>
+                
+              <button 
+                onclick="event.stopPropagation(); toggleFollow('${user.id}')" 
+                class="w-full py-2 px-4 rounded-full font-semibold transition duration-150 ${
+                  isFollowing 
+                    ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }"
+              >
+                ${isFollowing ? 'Following' : 'Follow'}
+              </button>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
+
+        window.toggleFollow = async function(targetUserId) {
+          if (!currentUserId) {
+            alert('Please log in first');
+            return;
+          }
+            
+          if (currentUserId === targetUserId) {
+            alert('You cannot follow yourself');
+            return;
+          }
+            
+          const myRef = doc(db, USERS_COLLECTION, currentUserId);
+          const targetRef = doc(db, USERS_COLLECTION, targetUserId);
+            
+          try {
+            const isFollowing = (currentUserProfile.following || []).includes(targetUserId);
+            
+            if (isFollowing) {
+              await updateDoc(myRef, {
+                following: arrayRemove(targetUserId)
+              });
+              
+              await updateDoc(targetRef, {
+                followers: arrayRemove(currentUserId)
+              });
+            } else {
+              await updateDoc(myRef, {
+                following: arrayUnion(targetUserId)
+              });
+              
+              await updateDoc(targetRef, {
+                followers: arrayUnion(currentUserId)
+              });
+            }
+          } catch (error) {
+            console.error("Error toggling follow:", error);
+            alert('Failed to update follow status. Please check Firestore Rules: ' + error.message);
+          }
+        };
+
+        window.showFollowersModal = async function() {
+          const modal = document.getElementById('followers-modal');
+          const list = document.getElementById('followers-list');
+            
+          modal.classList.remove('hidden');
+          list.innerHTML = '<p class="text-gray-500 text-center">Loading...</p>';
+            
+          const followerIds = currentUserProfile.followers || [];
+            
+          if (followerIds.length === 0) {
+            list.innerHTML = '<p class="text-gray-500 text-center">No followers yet</p>';
+            return;
+          }
+            
+          list.innerHTML = '';
+            
+          for (const userId of followerIds) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+              const userEl = document.createElement('div');
+              userEl.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 cursor-pointer transition';
+              userEl.innerHTML = `
+                <div class="flex items-center gap-3" onclick="viewUserProfile('${user.id}')">
+                  <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+                    ${(user.name || 'P')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900">${escapeHtml(user.name || 'Player')}</p>
+                    <p class="text-xs text-gray-600">${escapeHtml(user.position || '')}</p>
+                  </div>
+                </div>
+              `;
+              list.appendChild(userEl);
+            }
+          }
+            
+          lucide.createIcons();
+        };
+
+        window.showFollowingModal = async function() {
+          const modal = document.getElementById('following-modal');
+          const list = document.getElementById('following-list');
+            
+          modal.classList.remove('hidden');
+          list.innerHTML = '<p class="text-gray-500 text-center">Loading...</p>';
+            
+          const followingIds = currentUserProfile.following || [];
+            
+          if (followingIds.length === 0) {
+            list.innerHTML = '<p class="text-gray-500 text-center">Not following anyone yet</p>';
+            return;
+          }
+            
+          list.innerHTML = '';
+            
+          for (const userId of followingIds) {
+            const user = allUsers.find(u => u.id === userId);
+            if (user) {
+              const isFollowing = (currentUserProfile.following || []).includes(userId);
+              const userEl = document.createElement('div');
+              userEl.className = 'flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition';
+              userEl.innerHTML = `
+                <div class="flex items-center gap-3 cursor-pointer" onclick="viewUserProfile('${userId}')">
+                  <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold">
+                    ${(user.name || 'P')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <p class="font-semibold text-gray-900">${escapeHtml(user.name || 'Player')}</p>
+                    <p class="text-xs text-gray-600">${escapeHtml(user.position || '')}</p>
+                  </div>
+                </div>
+                <button 
+                  onclick="event.stopPropagation(); toggleFollow('${userId}')" 
+                  class="py-1 px-3 rounded-full text-sm font-semibold ${
+                    isFollowing 
+                      ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                    }"
+                >
+                  ${isFollowing ? 'Unfollow' : 'Follow'}
+                </button>
+              `;
+              list.appendChild(userEl);
+            }
+          }
+            
+          lucide.createIcons();
+        };
+
+        window.closeFollowersModal = function() {
+          document.getElementById('followers-modal').classList.add('hidden');
+        };
+
+        window.closeFollowingModal = function() {
+          document.getElementById('following-modal').classList.add('hidden');
+        };
+
+        window.viewUserProfile = async function(userId) {
+          viewingUserId = userId;
+          const modal = document.getElementById('user-profile-modal');
+            
+          try {
+            const userDoc = await getDoc(doc(db, USERS_COLLECTION, userId));
+            if (!userDoc.exists()) {
+              alert('User not found');
+              return;
+            }
+            
+            const userData = userDoc.data();
+            
+            // Update profile header
+            document.getElementById('user-profile-avatar').textContent = (userData.name || 'P')[0].toUpperCase();
+            document.getElementById('user-profile-name').textContent = userData.name || 'Player';
+            document.getElementById('user-profile-position').textContent = userData.position || 'Player';
+            document.getElementById('user-profile-club').textContent = userData.club || 'Club not specified';
+            document.getElementById('user-profile-followers-count').textContent = (userData.followers || []).length;
+            document.getElementById('user-profile-following-count').textContent = (userData.following || []).length;
+            
+            // Update follow button
+            const isFollowing = (currentUserProfile.following || []).includes(userId);
+            const followBtn = document.getElementById('user-profile-follow-btn');
+            followBtn.textContent = isFollowing ? 'Following' : 'Follow';
+            followBtn.className = `font-semibold py-2 px-6 rounded-full transition duration-150 ${
+              isFollowing 
+                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300' 
+                : 'bg-white text-green-600 hover:bg-gray-100'
+            }`;
+            
+            // Load user's posts
+            let posts = [];
+            try {
+              const postsQuery = query(
+                collection(db, POSTS_COLLECTION),
+                orderBy('timestamp', 'desc')
+              );
+              const postsSnap = await getDocs(postsQuery);
+              postsSnap.forEach(d => {
+                const postData = d.data();
+                if (postData.userId === userId) {
+                  posts.push({ id: d.id, ...postData });
+                }
+              });
+            } catch (error) {
+              console.error('Error loading posts:', error);
+            }
+            
+            document.getElementById('user-profile-posts-count').textContent = posts.length;
+            
+            const postsContainer = document.getElementById('user-profile-posts');
+            postsContainer.innerHTML = '';
+            
+            if (posts.length === 0) {
+              postsContainer.innerHTML = '<p class="text-center text-gray-500 py-8">No posts yet</p>';
+            } else {
+              posts.forEach(post => {
+                const postCard = document.createElement('div');
+                postCard.className = 'bg-slate-50 p-4 rounded-lg border border-slate-200';
+                const timeStr = post.timestamp ? formatTime(post.timestamp.toDate()) : 'Just now';
+                postCard.innerHTML = `
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="text-xs text-gray-500">${timeStr}</span>
+                  </div>
+                  <p class="text-gray-800">${escapeHtml(post.content || '')}</p>
+                `;
+                postsContainer.appendChild(postCard);
+              });
+            }
+            
+            // Load user's highlights
+            let highlights = [];
+            try {
+              const highlightsQuery = query(
+                collection(db, HIGHLIGHTS_COLLECTION),
+                orderBy('timestamp', 'desc')
+              );
+              const highlightsSnap = await getDocs(highlightsQuery);
+              highlightsSnap.forEach(d => {
+                const highlightData = d.data();
+                if (highlightData.userId === userId) {
+                  highlights.push({ id: d.id, ...highlightData });
+                }
+              });
+            } catch (error) {
+              console.error('Error loading highlights:', error);
+            }
+            
+            document.getElementById('user-profile-highlights-count').textContent = highlights.length;
+            
+            const highlightsContainer = document.getElementById('user-profile-highlights');
+            highlightsContainer.innerHTML = '';
+            
+            if (highlights.length === 0) {
+              highlightsContainer.innerHTML = '<p class="col-span-full text-center text-gray-500 py-8">No highlights yet</p>';
+            } else {
+              highlights.forEach(highlight => {
+                const card = document.createElement('a');
+                card.href = highlight.videoUrl || '#';
+                card.target = '_blank';
+                card.className = 'aspect-[9/16] bg-gradient-to-br from-slate-700 to-slate-900 rounded-lg flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
+                card.innerHTML = `
+                  <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+                  <i data-lucide="play-circle" class="w-10 h-10 mb-2 relative z-10"></i>
+                  <p class="text-xs font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+                `;
+                highlightsContainer.appendChild(card);
+              });
+            }
+            
+            modal.classList.remove('hidden');
+            switchProfileTab('posts');
+            lucide.createIcons();
+            
+          } catch (error) {
+            console.error('Error loading user profile:', error);
+            alert('Failed to load user profile: ' + error.message);
+          }
+        };
+
+        window.closeUserProfileModal = function() {
+          document.getElementById('user-profile-modal').classList.add('hidden');
+          viewingUserId = null;
+        };
+
+        window.switchProfileTab = function(tab) {
+          document.querySelectorAll('.profile-tab').forEach(btn => {
+            if (btn.getAttribute('data-tab') === tab) {
+              btn.className = 'profile-tab flex-1 py-3 px-4 text-center font-semibold text-green-600 border-b-2 border-green-600';
+            } else {
+              btn.className = 'profile-tab flex-1 py-3 px-4 text-center font-semibold text-gray-500 hover:text-gray-700';
+            }
+          });
+            
+          if (tab === 'posts') {
+            document.getElementById('profile-posts-tab').classList.remove('hidden');
+            document.getElementById('profile-highlights-tab').classList.add('hidden');
+          } else {
+            document.getElementById('profile-posts-tab').classList.add('hidden');
+            document.getElementById('profile-highlights-tab').classList.remove('hidden');
+          }
+            
+          lucide.createIcons();
+        };
+
+        window.toggleFollowFromProfile = async function() {
+          if (viewingUserId) {
+            await toggleFollow(viewingUserId);
+            // Refresh the profile view to update follow button
+            await viewUserProfile(viewingUserId);
+          }
+        };
+
+        window.showLoginForm = function() {
+          document.getElementById('login-form').classList.remove('hidden');
+          document.getElementById('register-form').classList.add('hidden');
+          document.getElementById('auth-error').classList.add('hidden');
+        };
+
+        window.showRegisterForm = function() {
+          document.getElementById('login-form').classList.add('hidden');
+          document.getElementById('register-form').classList.remove('hidden');
+          document.getElementById('auth-error').classList.add('hidden');
+        };
+
+        window.handleRegister = async function(event) {
+          event.preventDefault();
+            
+          const name = document.getElementById('register-name').value;
+          const email = document.getElementById('register-email').value;
+          const password = document.getElementById('register-password').value;
+          const position = document.getElementById('register-position').value;
+          const errorEl = document.getElementById('auth-error');
+            
+          try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            
+            await setDoc(doc(db, USERS_COLLECTION, user.uid), {
+              name: name,
+              position: position,
+              club: '',
+              followers: [],
+              following: [],
+              createdAt: serverTimestamp()
+            });
+            
+          } catch (error) {
+            console.error("Register error:", error);
+            errorEl.textContent = error.message || 'Failed to create account. Please try again.';
+            errorEl.classList.remove('hidden');
+          }
+        };
+
+        window.handleLogout = async function() {
+          try {
+            await signOut(auth);
+          } catch (error) {
+            console.error("Logout error:", error);
+            alert('Failed to log out');
+          }
+        };
+
+        function listenToFeed(){
+          const loadingEl = document.getElementById('loading-indicator');
+            
+          try {
+            const q = query(collection(db, POSTS_COLLECTION), orderBy('timestamp', 'desc'));
+            onSnapshot(q, snap => {
+              const posts = [];
+              snap.forEach(d => posts.push({ id: d.id, ...d.data() }));
+              renderFeed(posts);
+              if (loadingEl) loadingEl.style.display = 'none';
+            }, err => {
+              console.error("Feed error:", err);
+              if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500">Error loading feed.</p>';
+            });
+          } catch (e) {
+            console.error(e);
+            if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500">Error initializing feed.</p>';
+          }
+        }
+
+        function renderFeed(posts){
+          const container = document.getElementById('feed-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (posts.length === 0) {
+            container.innerHTML = '<div class="bg-white p-8 rounded-xl text-center text-gray-500 shadow-lg border border-slate-200"><i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No posts yet. Be the first to share!</p></div>';
+            lucide.createIcons();
+            return;
+          }
+            
+          posts.forEach(post => {
+            const card = document.createElement('div');
+            card.className = 'bg-white p-6 rounded-xl shadow-lg border border-slate-200 hover:shadow-xl transition duration-150';
+            
+            const timeStr = post.timestamp ? formatTime(post.timestamp.toDate()) : 'Just now';
+            
+            card.innerHTML = `
+              <div class="flex items-start gap-3 mb-3">
+                <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center text-white font-bold cursor-pointer" onclick="viewUserProfile('${post.userId}')">
+                  ${(post.username || 'A')[0].toUpperCase()}
+                </div>
+                <div class="flex-grow">
+                  <div class="flex items-center gap-2">
+                    <h4 class="font-bold text-gray-900 cursor-pointer hover:text-green-600" onclick="viewUserProfile('${post.userId}')">${escapeHtml(post.username || 'Anonymous Player')}</h4>
+                    <span class="text-xs text-gray-400">${timeStr}</span>
+                  </div>
+                  <p class="text-sm text-gray-600">${escapeHtml(post.position || '')} ${post.club ? '• ' + escapeHtml(post.club) : ''}</p>
+                </div>
+              </div>
+              <p class="text-gray-800 whitespace-pre-wrap">${escapeHtml(post.content || '')}</p>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
+
+        function listenToHighlights(){
+          const loadingEl = document.getElementById('highlights-loading');
+            
+          try {
+            const q = query(collection(db, HIGHLIGHTS_COLLECTION), orderBy('timestamp', 'desc'));
+            onSnapshot(q, snap => {
+              const highlights = [];
+              snap.forEach(d => highlights.push({ id: d.id, ...d.data() }));
+              renderHighlights(highlights);
+              if (loadingEl) loadingEl.style.display = 'none';
+            }, err => {
+              console.error("Highlights error:", err);
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        function renderHighlights(highlights){
+          const container = document.getElementById('highlights-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (highlights.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><i data-lucide="video-off" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No highlights yet. Upload yours!</p></div>';
+            lucide.createIcons();
+            return;
+          }
+            
+          highlights.forEach(highlight => {
+            const card = document.createElement('a');
+            card.href = highlight.videoUrl || '#';
+            card.target = '_blank';
+            card.className = 'highlight-card bg-gradient-to-br from-slate-700 to-slate-900 flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
+            
+            card.innerHTML = `
+              <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+              <i data-lucide="play-circle" class="w-12 h-12 mb-2 relative z-10 group-hover:scale-110 transition duration-200"></i>
+              <p class="text-sm font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+              <p class="text-xs text-gray-300 mt-1 relative z-10">${escapeHtml(highlight.username || 'Player')}</p>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
+
+        window.handlePost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const content = document.getElementById('post-content').value.trim();
+          if (!content) return;
+            
+          const btn = document.getElementById('post-button');
+          btn.disabled = true;
+          btn.textContent = 'Posting...';
+            
+          try {
+            await addDoc(collection(db, POSTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              position: currentUserProfile.position,
+              club: currentUserProfile.club,
+              content: content,
+              timestamp: serverTimestamp()
+            });
+            
+            document.getElementById('post-content').value = '';
+            btn.textContent = 'Post Update';
+            
+          } catch (error) {
+            console.error("Error posting:", error);
+            alert('Failed to post. Please try again.');
+            btn.textContent = 'Post Update';
+            btn.disabled = false;
+          }
+        };
+
+        window.handleHighlightPost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const fileInput = document.getElementById('highlight-file');
+          const urlInput = document.getElementById('highlight-url');
+          const titleInput = document.getElementById('highlight-title');
+          const errorEl = document.getElementById('highlight-error');
+          const btn = document.getElementById('highlight-post-button');
+            
+          const file = fileInput.files[0];
+          const url = urlInput.value.trim();
+          const title = titleInput.value.trim() || 'My Highlight';
+            
+          if (!file && !url) {
+            errorEl.classList.remove('hidden');
+            return;
+          }
+            
+          errorEl.classList.add('hidden');
+          btn.disabled = true;
+          btn.textContent = 'Processing...';
+            
+          try {
+            let videoUrl = url;
+            
+            if (file) {
+              const fileExtension = file.name.split('.').pop();
+              const fileName = `${Date.now()}_${title.replace(/\s/g, '_')}.${fileExtension}`;
+              
+              const storagePath = `highlights/${currentUserId}/${fileName}`; 
+              const fileRef = storageRef(storage, storagePath);
+              const uploadTask = uploadBytesResumable(fileRef, file);
+              
+              await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', 
+                  (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    btn.textContent = `Uploading... ${Math.round(progress)}%`;
+                  },
+                  (error) => {
+                    console.error("Storage Error:", error);
+                    reject(new Error(`Upload failed: ${error.message}`));
+                  },
+                  async () => {
+                    try {
+                      videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                      resolve();
+                    } catch(e) {
+                        console.error("Download URL Error:", e);
+                        reject(new Error("Failed to get video URL."));
+                    }
+                  }
+                );
+              });
+            }
+            
+            await addDoc(collection(db, HIGHLIGHTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              title: title,
+              videoUrl: videoUrl, 
+              timestamp: serverTimestamp()
+            });
+            
+            fileInput.value = '';
+            urlInput.value = '';
+            titleInput.value = '';
+            document.getElementById('file-upload-label').textContent = 'Select a video file';
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+            
+            alert('Highlight shared successfully!');
+            
+          } catch (error) {
+            console.error("Error uploading highlight:", error);
+            alert('Failed to upload highlight. Please try again. Check Storage Rules! Error: ' + error.message);
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+          }
+        };
+
+        function listenToHighlights(){
+          const loadingEl = document.getElementById('highlights-loading');
+            
+          try {
+            const q = query(collection(db, HIGHLIGHTS_COLLECTION), orderBy('timestamp', 'desc'));
+            onSnapshot(q, snap => {
+              const highlights = [];
+              snap.forEach(d => highlights.push({ id: d.id, ...d.data() }));
+              renderHighlights(highlights);
+              if (loadingEl) loadingEl.style.display = 'none';
+            }, err => {
+              console.error("Highlights error:", err);
+            });
+          } catch (e) {
+            console.error(e);
+          }
+        }
+
+        function renderHighlights(highlights){
+          const container = document.getElementById('highlights-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (highlights.length === 0) {
+            container.innerHTML = '<div class="col-span-full text-center p-8 text-gray-500"><i data-lucide="video-off" class="w-12 h-12 mx-auto mb-3 text-gray-300"></i><p>No highlights yet. Upload yours!</p></div>';
+            lucide.createIcons();
+            return;
+          }
+            
+          highlights.forEach(highlight => {
+            const card = document.createElement('a');
+            card.href = highlight.videoUrl || '#';
+            card.target = '_blank';
+            card.className = 'highlight-card bg-gradient-to-br from-slate-700 to-slate-900 flex flex-col items-center justify-center p-4 text-white relative overflow-hidden group';
+            
+            card.innerHTML = `
+              <div class="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition duration-200"></div>
+              <i data-lucide="play-circle" class="w-12 h-12 mb-2 relative z-10 group-hover:scale-110 transition duration-200"></i>
+              <p class="text-sm font-semibold text-center relative z-10">${escapeHtml(highlight.title || 'Highlight')}</p>
+              <p class="text-xs text-gray-300 mt-1 relative z-10">${escapeHtml(highlight.username || 'Player')}</p>
+            `;
+            
+            container.appendChild(card);
+          });
+            
+          lucide.createIcons();
+        }
+
+        window.handlePost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const content = document.getElementById('post-content').value.trim();
+          if (!content) return;
+            
+          const btn = document.getElementById('post-button');
+          btn.disabled = true;
+          btn.textContent = 'Posting...';
+            
+          try {
+            await addDoc(collection(db, POSTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              position: currentUserProfile.position,
+              club: currentUserProfile.club,
+              content: content,
+              timestamp: serverTimestamp()
+            });
+            
+            document.getElementById('post-content').value = '';
+            btn.textContent = 'Post Update';
+            
+          } catch (error) {
+            console.error("Error posting:", error);
+            alert('Failed to post. Please try again.');
+            btn.textContent = 'Post Update';
+            btn.disabled = false;
+          }
+        };
+
+        window.handleHighlightPost = async function() {
+          if (!currentUserId) {
+            alert('Please wait for authentication...');
+            return;
+          }
+            
+          const fileInput = document.getElementById('highlight-file');
+          const urlInput = document.getElementById('highlight-url');
+          const titleInput = document.getElementById('highlight-title');
+          const errorEl = document.getElementById('highlight-error');
+          const btn = document.getElementById('highlight-post-button');
+            
+          const file = fileInput.files[0];
+          const url = urlInput.value.trim();
+          const title = titleInput.value.trim() || 'My Highlight';
+            
+          if (!file && !url) {
+            errorEl.classList.remove('hidden');
+            return;
+          }
+            
+          errorEl.classList.add('hidden');
+          btn.disabled = true;
+          btn.textContent = 'Processing...';
+            
+          try {
+            let videoUrl = url;
+            
+            if (file) {
+              const fileExtension = file.name.split('.').pop();
+              const fileName = `${Date.now()}_${title.replace(/\s/g, '_')}.${fileExtension}`;
+              
+              const storagePath = `highlights/${currentUserId}/${fileName}`; 
+              const fileRef = storageRef(storage, storagePath);
+              const uploadTask = uploadBytesResumable(fileRef, file);
+              
+              await new Promise((resolve, reject) => {
+                uploadTask.on('state_changed', 
+                  (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    btn.textContent = `Uploading... ${Math.round(progress)}%`;
+                  },
+                  (error) => {
+                    console.error("Storage Error:", error);
+                    reject(new Error(`Upload failed: ${error.message}`));
+                  },
+                  async () => {
+                    try {
+                      videoUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                      resolve();
+                    } catch(e) {
+                        console.error("Download URL Error:", e);
+                        reject(new Error("Failed to get video URL."));
+                    }
+                  }
+                );
+              });
+            }
+            
+            await addDoc(collection(db, HIGHLIGHTS_COLLECTION), {
+              userId: currentUserId,
+              username: currentUserProfile.name,
+              title: title,
+              videoUrl: videoUrl, 
+              timestamp: serverTimestamp()
+            });
+            
+            fileInput.value = '';
+            urlInput.value = '';
+            titleInput.value = '';
+            document.getElementById('file-upload-label').textContent = 'Select a video file';
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+            
+            alert('Highlight shared successfully!');
+            
+          } catch (error) {
+            console.error("Error uploading highlight:", error);
+            alert('Failed to upload highlight. Please try again. Check Storage Rules! Error: ' + error.message);
+            btn.textContent = 'Share Highlight';
+            btn.disabled = false;
+          }
+        };
+
+        window.handlePasswordResetPrompt = function() {
+            const email = prompt("Enter your email address to receive a password reset link:");
+            if (email) {
+                handlePasswordReset(email.trim());
+            }
+        };
+
+        async function handlePasswordReset(email) {
+            const errorEl = document.getElementById('auth-error');
+            errorEl.classList.add('hidden');
+
+            try {
+                await sendPasswordResetEmail(auth, email);
+                alert(`Password reset link sent to ${email}. Check your inbox!`);
+            } catch (error) {
+                console.error("Password reset error:", error);
+                errorEl.textContent = error.message || 'Failed to send reset link. Please try again or check the email address.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+        
+        function renderMessages(messages) {
+          const container = document.getElementById('messages-container');
+          if (!container) return;
+            
+          container.innerHTML = '';
+            
+          if (messages.length === 0) {
+            container.innerHTML = '<div class="text-center text-gray-400 py-8"><p>No messages yet. Start the conversation!</p></div>';
+            return;
+          }
+            
+          messages.forEach(msg => {
+            const msgDiv = document.createElement('div');
+            const isOwn = msg.userId === currentUserId;
+            
+            msgDiv.className = `flex ${isOwn ? 'justify-end' : 'justify-start'}`;
+            
+            let dateObj;
+            if (msg.timestamp && msg.timestamp.toDate) {
+                dateObj = msg.timestamp.toDate();
+            } else if (msg.timestamp && msg.timestamp.seconds) {
+                dateObj = new Date(msg.timestamp.seconds * 1000);
+            } else {
+                dateObj = new Date(); 
+            }
+
+            msgDiv.innerHTML = `
+              <div class="max-w-xs ${isOwn ? 'bg-green-600 text-white' : 'bg-slate-100 text-gray-800'} rounded-lg p-3">
+                <p class="text-xs font-semibold mb-1">${escapeHtml(msg.username || 'Player')}</p>
+                <p class="text-sm">${escapeHtml(msg.content || '')}</p>
+                <p class="text-xs opacity-70 mt-1">${formatTime(dateObj)}</p>
+              </div>
+            `;
+            
+            container.appendChild(msgDiv);
+          });
+            
+          container.scrollTop = container.scrollHeight;
         }
 
         window.openProfileModal = function() {
